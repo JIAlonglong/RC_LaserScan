@@ -1,4 +1,3 @@
-
 #include "laser_filter.h"
 
 

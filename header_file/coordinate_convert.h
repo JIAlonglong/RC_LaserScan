@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 void coordinate_rotation(float x1,float y1,float yaw,float *x,float *y);
-void change_to_TR_coordinate(float pot_laser_x,float pot_laser_y,float DR_DrDepartureZone_x,float DR_DrDepartureZone_y,float *pot_TrDepartureZone_x,float *pot_TrDepartureZone_y);
+void change_to_TR_coordinate(float pot_laser_x,float pot_laser_y,float DR_DrDepartureZone_x,float DR_DrDepartureZone_y,int *pot_TrDepartureZone_x,int *pot_TrDepartureZone_y);
 
 /*****************
  *         y

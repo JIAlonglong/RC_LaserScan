@@ -1,6 +1,5 @@
 #pragma once
-const float kalman_Q =1e6;
-const float kalman_R =1e-1;
+
 class Kalman
 {
 public:
@@ -12,7 +11,7 @@ public:
         float R;   //测量噪声偏差，(系统搭建好以后，通过测量统计实验获得)
         float P;   //估计误差协方差
 	
-        float KalmanFilter(float lastMeasurement);
+        float KalmanFilter(float lastMeasurement,float Q,float R);
         Kalman();
 	~Kalman();		
 };

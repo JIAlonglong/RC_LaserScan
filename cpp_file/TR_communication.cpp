@@ -67,7 +67,7 @@ void TR_SerialWrite(int left_x_pos, int left_y_pos,int middle_x_pos,int middle_y
 	    buf[i + 7] = middle_x.data[i]; //buf[7] buf[8]
         buf[i + 9] = middle_y.data[i]; //buf[9] buf[10]
         buf[i + 11] = right_x.data[i]; //buf[11] buf[12]
-        buf[i + 13] = right_x.data[i]; //buf[13] buf[14]
+        buf[i + 13] = right_y.data[i]; //buf[13] buf[14]
     }
     // 预留控制指令
     buf[3 + length - 1] = ctrlFlag;       //buf[15]

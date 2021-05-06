@@ -4,8 +4,8 @@ Kalman::Kalman(){
 	      A = 1;  //标量卡尔曼
         H = 1;  //
         P = 10;  //后验状态估计值误差的方差的初始值（不要为0问题不大）
-        Q =kalman_Q;
-        R =kalman_R;
+        //Q =kalman_Q;
+        //R =kalman_R;
         filterValue = 0;// 测量的初始值
 }
 
@@ -13,7 +13,7 @@ Kalman::~Kalman() {
 
 }
 
-float Kalman::KalmanFilter(float lastMeasurement)
+float Kalman::KalmanFilter(float lastMeasurement,float Q,float R)
 {
         //预测下一时刻的值
         //x的先验估计由上一个时间点的后验估计值和输入信息给出，此处需要根据基站>高度做一个修改

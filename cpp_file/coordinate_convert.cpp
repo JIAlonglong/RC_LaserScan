@@ -25,7 +25,7 @@ void coordinate_rotation(float x1,float y1,float yaw,float *x,float *y)
  * @param pot_TrDepartureZone_x 壶相对TR全场坐标原点x坐标
  * @param pot_TrDepartureZone_y 壶相对TR全场坐标原点y坐标
  * ******************************************************/
-void change_to_TR_coordinate(float pot_laser_x,float pot_laser_y,float DR_DrDepartureZone_x,float DR_DrDepartureZone_y,float *pot_TrDepartureZone_x,float *pot_TrDepartureZone_y)
+void change_to_TR_coordinate(float pot_laser_x,float pot_laser_y,float DR_DrDepartureZone_x,float DR_DrDepartureZone_y,int *pot_TrDepartureZone_x,int *pot_TrDepartureZone_y)
 {
     // DR坐标系 正对比赛场地 右x 上y
     // TR坐标系 正对比赛场地 下x 右y
@@ -34,11 +34,11 @@ void change_to_TR_coordinate(float pot_laser_x,float pot_laser_y,float DR_DrDepa
     pot_laser_x*=1000;
     pot_laser_y*=1000;
 
-    //转换到TR坐标系原点 10900 5000
-    pot_laser_x=DR_DrDepartureZone_x - 10900+pot_laser_x;
-    pot_laser_y=DR_DrDepartureZone_y - 5000  +pot_laser_y;
+    //转换到TR坐标系原点 4800 6000
+    pot_laser_x=4300-0+pot_laser_x;
+    pot_laser_y=5500 -0 +pot_laser_y;
     
     // 转换到TR坐标系：y变成x x变成-y
-    *pot_TrDepartureZone_x = -pot_laser_y;
-    *pot_TrDepartureZone_y =  pot_laser_x;
+    *pot_TrDepartureZone_x = static_cast<int>(pot_laser_x);
+    *pot_TrDepartureZone_y = static_cast<int>(pot_laser_y);
 }

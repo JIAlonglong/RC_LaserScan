@@ -4,6 +4,9 @@
 #include "laser_filter.h"
 #include "TR_communication.h"
 #include "coordinate_convert.h"
+#include "save_data.h"
+
+#include "pots_coordinates/coordinate.h"
 
 /**************
  * 本份代码用于雷达 确定三个转过的壶的全场坐标
@@ -12,11 +15,25 @@
  * **************/
 
 /*
-! 三等分是以车子在正中心的解决办法
+! 三等分是以车子在正中心的解决办法 已经写好根据全场定位的解决办法 待调试
+! 要根据全场定位坐标 滤去对方区域的壶
 TODO 偏航角目前为0 后续需将其加入代码中
+* error 约等于0.01 失误率8％
 */
 
+
+int times;//第几次调试
+bool calibration = false;//是否标定雷达相对全场坐标位置
+bool dr = false;//雷达是否放在dr
+ros::Publisher laser_pub; //发布滤波后的雷达数据的Publisher 用于rviz查看形状
+ros::Publisher coordinate_info_pub;//发布雷达获取到左中右三个壶的坐标 用于画图
+pots_coordinates::coordinate coordinate_msg;//坐标信息类
+
+//卡尔曼参数
+float Q_parameter =1e6;
+float R_parameter =1e-1;//1e-1
 Kalman kalman_vec[DATA_NUM];
+
 void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
 {
     // 初始化角度数据
@@ -26,10 +43,10 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
        THETA[i] =-3*PI/4 +ANGLE_INCREMENT*i;
    }
 
-    //数据
+    //获取数据
     std::vector<float> laser_data(scan->ranges);
   
-    //选择所要处理数据的范围 半径
+    //选择所要处理数据的范围 半径滤波
     for (int i =0;i<DATA_NUM;i++)
     {
         if (laser_data[i] >DISTANCE_MAX)
@@ -38,7 +55,7 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
         }
     }
 
-    //选择所要处理数据的范围 角度
+    //选择所要处理数据的范围 角度滤波
     for (int i =0;i<DATA_NUM;i++)
     {
         if (THETA[i]< -PI/2 ||THETA[i]>PI/2)
@@ -56,6 +73,21 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
     //数量滤波
     num_filter(laser_data);
 
+    //**************** DR:滤去对面的壶 根据全场坐标******************* 
+
+    //TODO has bug
+    float x;
+    for(int i =0;i<DATA_NUM;i++)
+    {
+        x = fabs(cos(THETA[i])*laser_data[i]);
+        if(x >1.2)
+        {
+            //ROS_INFO("%f",x);
+            laser_data[i] =0;
+        }
+    }
+
+
     //卡尔曼滤波
     for(int i =0;i<DATA_NUM;i++)
     {
@@ -65,10 +97,29 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
         }
         else
         {
-            kalman_vec[i].KalmanFilter(laser_data[i]);
+            kalman_vec[i].KalmanFilter(laser_data[i],Q_parameter,R_parameter);
             laser_data[i] = kalman_vec[i].filterValue;
         }      
     }
+
+    //要发布的滤波后的数据
+    sensor_msgs::LaserScan filter_result;
+    filter_result.header.stamp = ros::Time::now();
+    filter_result.header.frame_id = "laser";
+    filter_result.angle_min = -3*PI/4;
+    filter_result.angle_max =3*PI/4;
+    filter_result.angle_increment = scan->angle_increment;
+    filter_result.time_increment = scan->time_increment;
+    filter_result.scan_time = scan->scan_time;
+    filter_result.range_min = scan->range_min;
+    filter_result.range_max = scan->range_max;  
+    for(int i = 0; i < DATA_NUM; i++)
+    {
+      filter_result.ranges.push_back(laser_data[i]);
+      filter_result.intensities.push_back(scan->intensities[i]);
+    }
+    laser_pub.publish(filter_result);
+
 
     //获得连续段
     std::vector<float> final_start_index;
@@ -100,6 +151,31 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
         }
     }
 
+    //********************根据全场定位测试*******************//
+    // if(final_start_index.size() ==3)
+    // {
+    //     left.push_back(final_start_index[0]);
+    //     left.push_back(final_end_index[0]);
+    //     middle.push_back(final_start_index[1]);
+    //     middle.push_back(final_end_index[1]);
+    //     right.push_back(final_start_index[2]);
+    //     right.push_back(final_end_index[2]);
+    // }
+    // else if(final_start_index.size() ==2)
+    // {
+    //     //TODO 根据全场定位确定是左中 还是中右壶
+    // }
+    // else if(final_start_index.size() ==1)
+    // {
+    //     //TODO 根据全场定位确定哪一个壶
+    // }
+    // else
+    // {
+    //     ROS_ERROR(" 检测不到壶或者多于3个壶！");
+    // }
+
+
+
     if(left.size() %2 !=0 || middle.size() %2 !=0 || right.size() %2 !=0)
     {
         ROS_ERROR(" 取余2!=0");
@@ -114,26 +190,46 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
     {
         ROS_ERROR(" zero in one part!");
     }
-    
+
     //分别获得 左中右三个壶的坐标
     std::vector<float> left_xyR(3),middle_xyR(3),right_xyR(3);
     index2center(left,laser_data,left_xyR);
     index2center(middle,laser_data,middle_xyR);
     index2center(right,laser_data,right_xyR);
-    ROS_INFO("left:%f,%f,middle:%f,%f,right:%f,%f",
-    left_xyR[0],left_xyR[1],middle_xyR[0],middle_xyR[1],right_xyR[0],right_xyR[1]);
-    
+    // ROS_INFO("left:%f,%f,middle:%f,%f,right:%f,%f",
+    // left_xyR[0],left_xyR[1],middle_xyR[0],middle_xyR[1],right_xyR[0],right_xyR[1]);
+
     //转换到TR世界坐标系
-    float left_x,left_y,middle_x,middle_y,right_x,right_y;
+    int left_x,left_y,middle_x,middle_y,right_x,right_y;
     change_to_TR_coordinate(left_xyR[0],left_xyR[1],10900,5000,&left_x,&left_y);
-    change_to_TR_coordinate(middle_xyR[0],middle_xyR[1],10900,5000,&left_x,&left_y);
-    change_to_TR_coordinate(right_xyR[0],right_xyR[1],10900,5000,&left_x,&left_y);
+    change_to_TR_coordinate(middle_xyR[0],middle_xyR[1],10900,5000,&middle_x,&middle_y);
+    change_to_TR_coordinate(right_xyR[0],right_xyR[1],10900,5000,&right_x,&right_y);
+   
+
+    //保存
+    // std::string path ="./data/log/log"+std::to_string(times)+".txt";
+    // std::vector<float> raw_data(scan->ranges);
+    // save_data(path,DATA_NUM,raw_data,laser_data,left_x,left_y,middle_x,middle_y,right_x,right_y);
+    
+    //发布坐标数据
+    coordinate_msg.left_x = left_x;
+    coordinate_msg.left_y = left_y;
+    coordinate_msg.middle_x =middle_x;
+    coordinate_msg.middle_y =middle_y;
+    coordinate_msg.right_x =right_x;
+    coordinate_msg.right_y =right_y;
 
     //打印并串口发送
-    ROS_INFO("left:%f,%f,middle:%f,%f,right:%f,%f",left_x,left_y,middle_x,middle_y,right_x,right_y);
-     if(left_xyR[0]*left_xyR[1]*middle_xyR[0]*middle_xyR[1]*right_xyR[0]*right_xyR[1]!=0)
+    // ROS_INFO("left:%4d,%4d,middle:%4d,%4d,right:%4d,%4d",
+    //                         coordinate_msg.left_x,coordinate_msg.left_y,
+    //                         coordinate_msg.middle_x,coordinate_msg.middle_y,
+    //                         coordinate_msg.right_x,coordinate_msg.right_y);
+    if(coordinate_msg.left_x*coordinate_msg.left_y*coordinate_msg.middle_x*coordinate_msg.middle_y*coordinate_msg.right_x*coordinate_msg.right_y!=0)
     {
-        TR_SerialWrite(left_x,left_y,middle_x,middle_y,right_x,right_y,0x07);
+        TR_SerialWrite(coordinate_msg.left_x,coordinate_msg.left_y,
+                            coordinate_msg.middle_x,coordinate_msg.middle_y,
+                            coordinate_msg.right_x,coordinate_msg.right_y,0x07);
+        coordinate_info_pub.publish(coordinate_msg);
     }
 
 }
@@ -148,6 +244,42 @@ int main(int argc, char **argv)
 
     // 创建节点句柄
     ros::NodeHandle n;
+    
+    //定义Publisher 发布坐标信息
+    coordinate_info_pub=n.advertise<pots_coordinates::coordinate>("/coordinate_info", 10);
+    // // 设置循环的频率
+    // ros::Rate loop_rate(1);
+
+    // while (ros::ok())
+    // {
+    //     // // 初始化learning_topic::Person类型的消息
+    //     
+    //             coordinate_msg.left_x = 1;
+    //             coordinate_msg.left_y = 2;
+    //             coordinate_msg.middle_x =3;
+    //             coordinate_msg.middle_y =4;
+    //             coordinate_msg.right_x =5;
+    //             coordinate_msg.right_y =6;
+
+    //     // 发布消息
+    //             coordinate_info_pub.publish(coordinate_msg);
+
+    //     ROS_INFO("coordinate  Info: left_x:%d  left_y:%d  middle_x:%d middle_y:%d right_x:%d right_y:%d",
+    //                               coordinate_msg.left_x, coordinate_msg.left_y,
+    //                               coordinate_msg.middle_x,coordinate_msg.middle_y,
+    //                                coordinate_msg.right_x,coordinate_msg.right_y);
+
+    //     // 按照循环频率延时
+    //     loop_rate.sleep();
+    // }
+
+
+    //定义Publisher 滤波后信息
+    laser_pub= n.advertise<sensor_msgs::LaserScan>("/filter", 10);
+
+   
+    //更新调试次数
+    times =update_times();
 
     // 创建一个Subscriber
     ros::Subscriber pose_sub = n.subscribe("/scan", 10, laser_callback);
@@ -155,5 +287,8 @@ int main(int argc, char **argv)
     // 循环等待回调函数
     ros::spin();
 
+
+
     return 0;
 }
+
