@@ -30,14 +30,14 @@ void save_data(std::string path,int num,std::vector<float> &raw_data,std::vector
     for(int i=0;i<num;i++)
     {
         out<<raw_data[i];
-        out<<" ";
+        out<<",";
     }
     out<<"\n";
     out<<"********************滤波数据********************\n";
     for(int i=0;i<num;i++)
     {
         out<<filter_data[i];
-        out<<" ";
+        out<<",";
     }
     out<<"\n";
     out<<"********************壶坐标********************\n";
