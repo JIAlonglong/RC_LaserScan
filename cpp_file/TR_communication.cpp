@@ -3,9 +3,9 @@
 using namespace std;
 using namespace boost::asio;
 //串口相关对象
-boost::asio::io_service iosev;
-boost::asio::serial_port sp(iosev, "/dev/ttyACM0");
-boost::system::error_code err;
+boost::asio::io_service tr_iosev;
+boost::asio::serial_port tr_sp(tr_iosev, "/dev/ttyACM0");
+boost::system::error_code tr_err;
 /********************************************************
             串口发送接收相关常量、变量、共用体对象
 ********************************************************/
@@ -27,11 +27,11 @@ union sendData
 ********************************************************/
 void TR_SerialInit()
 {
-    sp.set_option(serial_port::baud_rate(115200));
-    sp.set_option(serial_port::flow_control(serial_port::flow_control::none));
-    sp.set_option(serial_port::parity(serial_port::parity::none));
-    sp.set_option(serial_port::stop_bits(serial_port::stop_bits::one));
-    sp.set_option(serial_port::character_size(8));    
+    tr_sp.set_option(serial_port::baud_rate(115200));
+    tr_sp.set_option(serial_port::flow_control(serial_port::flow_control::none));
+    tr_sp.set_option(serial_port::parity(serial_port::parity::none));
+    tr_sp.set_option(serial_port::stop_bits(serial_port::stop_bits::one));
+    tr_sp.set_option(serial_port::character_size(8));    
 }
 
 /********************************************************
@@ -46,10 +46,10 @@ void TR_SerialWrite(int left_x_pos, int left_y_pos,int middle_x_pos,int middle_y
 
     left_x.d = left_x_pos;
     left_y.d = left_y_pos;
-    middle_x.d   =middle_x_pos;
-    middle_y.d   =middle_y_pos;
-    right_x.d =right_x_pos;
-    right_y.d =right_y_pos;
+    middle_x.d = middle_x_pos;
+    middle_y.d = middle_y_pos;
+    right_x.d = right_x_pos;
+    right_y.d = right_y_pos;
 
     // 设置消息头
     for(i = 0; i < 2; i++)
@@ -78,7 +78,7 @@ void TR_SerialWrite(int left_x_pos, int left_y_pos,int middle_x_pos,int middle_y
     buf[3 + length + 2] = ender[1];     //buf[18]
 
     // 通过串口下发数据
-    boost::asio::write(sp, boost::asio::buffer(buf));
+    boost::asio::write(tr_sp, boost::asio::buffer(buf));
 }
 
 /********************************************************

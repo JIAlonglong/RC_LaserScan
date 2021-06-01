@@ -1,7 +1,6 @@
 #include "save_data.h"
 /********************************************************
  * @brief 根据txt文件更新调试次数
- * @return 目前调试次数 
  * ******************************************************/
 int update_times(void)
 {
@@ -15,12 +14,13 @@ int update_times(void)
 
     //自增一后写入文件为下一次调试做准备
 	times_int ++;
-	std::ofstream out1("./data/times.txt");
-	if(out1.fail())return -1;
-	out1<<times_int;
-    out1.close();	
-	
-	return times_int;
+	std::ofstream out("./data/times.txt");
+	if(out.fail())return -1;
+	out<<times_int;
+    	out.close();
+
+	return times_int;	
+
 }
 
 void save_data(std::string path,int num,std::vector<float> &raw_data,std::vector<float> &filter_data,int left_x,int left_y,int middle_x,int middle_y,int right_x,int right_y)
@@ -46,4 +46,17 @@ void save_data(std::string path,int num,std::vector<float> &raw_data,std::vector
                  "right:"<<right_x<<","<<right_y<<std::endl;
     out<<"\n";
     out.close();
+}
+
+std::string date_init(void)
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    std::string run_code_date =  std::to_string(1900 + ltm->tm_year) +"-" + \
+                            std::to_string(1 + ltm->tm_mon) +"-"+ \
+                            std::to_string(ltm->tm_mday) + "-" + \
+                            std::to_string(ltm->tm_hour) +":"+\
+                            std::to_string(ltm->tm_min)+":"+\
+                            std::to_string(ltm->tm_sec);
+    return run_code_date;
 }

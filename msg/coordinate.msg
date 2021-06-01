@@ -1,6 +1,6 @@
-uint16 left_x
-uint16 left_y
-uint16 middle_x
-uint16 middle_y
-uint16 right_x
-uint16 right_y
+int16 left_x
+int16 left_y
+int16 middle_x
+int16 middle_y
+int16 right_x
+int16 right_y

@@ -6,6 +6,8 @@
 #include "coordinate_convert.h"
 #include "save_data.h"
 #include "pots_coordinates/coordinate.h"
+#include "DR_communication.h"
+#include "action.h"
 
 /**************
  * 本份代码用于雷达 确定三个转过的壶的全场坐标
@@ -20,89 +22,52 @@ TODO 偏航角目前为0 后续需将其加入代码中
 * error 约等于0.01 失误率8％
 */
 
-
-int times;//第几次调试
+bool calibrate = true;//是否标定
+std::string  run_code_date;
 ros::Publisher laser_pub; //发布滤波后的雷达数据的Publisher 用于rviz查看滤波效果
 ros::Publisher coordinate_info_pub;//发布雷达获取到左中右三个壶的坐标 用于画图可视化
 pots_coordinates::coordinate coordinate_msg;//坐标消息类型类
+Action action;//Action
 
-//卡尔曼参数
-float Q_parameter =1e6;
-float R_parameter =1e-1;//1e-1
-Kalman kalman_vec[DATA_NUM];
-void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
+void laser_callback(const sensor_msgs::LaserScan::ConstPtr& scan)
 {
-    // 初始化角度数据
+    // 初始化角度数据 
     std::vector<float> THETA(DATA_NUM);   
-    for(int i =0;i<DATA_NUM;i++)
+    for(int i = 0;i < DATA_NUM;i++)
     {
-       THETA[i] =-3*PI/4 +ANGLE_INCREMENT*i;
+       THETA[i] =(-3*PI)/4 + ANGLE_INCREMENT * i;
     }
 
-    //获取数据
+    // 获取数据
     std::vector<float> laser_data(scan->ranges);
-  
-    //选择所要处理数据的范围 半径滤波
-    for (int i =0;i<DATA_NUM;i++)
-    {
-        if (laser_data[i] >DISTANCE_MAX)
-        {
-            laser_data[i] = 0;
-        }
-    }
 
-    //选择所要处理数据的范围 角度滤波
-    for (int i =0;i<DATA_NUM;i++)
+    // DR_SerialRead(action.x,action.y,action.yaw,action.flag);
+  
+
+    //选择所要处理数据的范围
+    for(int i = 0;i < DATA_NUM;i++)
     {
-        if (THETA[i]< -PI/2 ||THETA[i]>PI/2)
-        {
-            laser_data[i] = 0;  
-        }
+        if(laser_data[i] > DISTANCE_MAX){laser_data[i] = 0;} //半径滤波
+        if((THETA[i]<(-PI)/2) || (THETA[i]>PI/2)){laser_data[i] = 0;}//角度滤波
+        //TODO 按全场坐标 
+        if(fabs(cos(THETA[i])*laser_data[i]) > 1.2){laser_data[i] =0;}//滤去对面的壶
     }
    
     // 去除离群点outliers
-    remove_outlier(laser_data,0.07,3);
+    remove_outlier(laser_data,THETA,0.07,3);
 
     // 滤出圆弧
-    get_circle(laser_data,0.03);//0.008
+    get_circle(laser_data,THETA,0.03);//0.008
 
     //数量滤波
-    num_filter(laser_data);
+    num_filter(laser_data,LASER_DATA_NUM_MIN);
 
-    //**************** DR:滤去对面的壶 根据全场坐标******************* 
-    //TODO 按全场坐标
-    float x;
-    for(int i =0;i<DATA_NUM;i++)
-    {
-        x = fabs(cos(THETA[i])*laser_data[i]);
-        if(x >1.2)
-        {
-            //ROS_INFO("%f",x);
-            laser_data[i] =0;
-        }
-    }
-
-
-    // //卡尔曼滤波
-    // for(int i =0;i<DATA_NUM;i++)
-    // {
-    //     if(laser_data[i]==0)
-    //     {
-    //         continue;
-    //     }
-    //     else
-    //     {
-    //         kalman_vec[i].KalmanFilter(laser_data[i],Q_parameter,R_parameter);
-    //         laser_data[i] = kalman_vec[i].filterValue;
-    //     }      
-    // }
-
-    //要发布的滤波后的数据
+    //发布滤波后的数据
     sensor_msgs::LaserScan filter_result;
     filter_result.header.stamp = ros::Time::now();
     filter_result.header.frame_id = "laser";
-    filter_result.angle_min = -3*PI/4;
-    filter_result.angle_max =3*PI/4;
+    filter_result.angle_min = (-3*PI)/4;
+    filter_result.angle_max = ( 3*PI)/4;
     filter_result.angle_increment = scan->angle_increment;
     filter_result.time_increment = scan->time_increment;
     filter_result.scan_time = scan->scan_time;
@@ -114,7 +79,6 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
       filter_result.intensities.push_back(scan->intensities[i]);
     }
     laser_pub.publish(filter_result);
-
 
     //获得连续段
     std::vector<float> final_start_index;
@@ -193,26 +157,26 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
 
     //转换到TR世界坐标系
     int left_x,left_y,middle_x,middle_y,right_x,right_y;
-    change_to_TR_coordinate(left_xyR[0],left_xyR[1],10900,5000,&left_x,&left_y);
-    change_to_TR_coordinate(middle_xyR[0],middle_xyR[1],10900,5000,&middle_x,&middle_y);
-    change_to_TR_coordinate(right_xyR[0],right_xyR[1],10900,5000,&right_x,&right_y);
+    change_to_TR_coordinate(left_xyR[0],left_xyR[1],500,-4300,&left_x,&left_y);
+    change_to_TR_coordinate(middle_xyR[0],middle_xyR[1],500,-4300,&middle_x,&middle_y);
+    change_to_TR_coordinate(right_xyR[0],right_xyR[1],500,-4300,&right_x,&right_y);
 
     //保存
-    std::string path ="./data/log/log"+std::to_string(times)+".txt";
+    std::string path ="./data/log/log"+run_code_date+".txt";
     std::vector<float> raw_data(scan->ranges);
     save_data(path,DATA_NUM,raw_data,laser_data,left_x,left_y,middle_x,middle_y,right_x,right_y);
     
-    //发布坐标数据
-    coordinate_msg.left_x = left_x;
-    coordinate_msg.left_y = left_y;
-    coordinate_msg.middle_x =middle_x;
-    coordinate_msg.middle_y =middle_y;
-    coordinate_msg.right_x =right_x;
-    coordinate_msg.right_y =right_y;
-
-    //串口发送 以及坐标的发布
+    //发布坐标数据 用于python画图
     if(left_x*left_y*middle_x*middle_y*right_x*right_y!=0)
     {
+        coordinate_msg.left_x = left_x;
+        coordinate_msg.left_y = left_y;
+        coordinate_msg.middle_x =middle_x;
+        coordinate_msg.middle_y =middle_y;
+        coordinate_msg.right_x =right_x;
+        coordinate_msg.right_y =right_y;
+
+        //串口发送 以及坐标的发布 
         TR_SerialWrite(left_x,left_y,middle_x,middle_y,right_x,right_y,0x07);
         coordinate_info_pub.publish(coordinate_msg);
     }
@@ -222,32 +186,41 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
     fflush(stdout);
 }
 
+
 int main(int argc, char **argv)
 {
-    //串口初始化
+    //DR串口初始化
+    DR_SerialInit();
+    
+    //TR无线串口初始化
     TR_SerialInit();
+    
+    // 初始化日期
+    run_code_date = date_init();
 
     // 初始化ROS节点
     ros::init(argc, argv, "Laser");
 
     // 创建节点句柄
     ros::NodeHandle n;
-    
-    //定义Publisher 发布坐标信息
-    coordinate_info_pub=n.advertise<pots_coordinates::coordinate>("/coordinate_info", 10);
 
-    //定义Publisher 滤波后信息
-    laser_pub= n.advertise<sensor_msgs::LaserScan>("/filter", 10);
+    //定义Publisher 发布滤波后坐标信息
+    coordinate_info_pub = n.advertise<pots_coordinates::coordinate>("/coordinate_info", 10);
+
+    //定义Publisher 发布滤波后雷达信息
+    laser_pub = n.advertise<sensor_msgs::LaserScan>("/filter", 10);
 
     //更新调试次数
-    times =update_times();
+    update_times();
 
-    // 创建一个Subscriber
-    ros::Subscriber pose_sub = n.subscribe("/scan", 10, laser_callback);
-    
-    // 循环等待回调函数
-    ros::spin();
+    // 创建一个Subscriber 回调函数
+    ros::Subscriber pose_sub = n.subscribe("/scan", 1, laser_callback);
+
+    // 定义Subscriber队列长度为1 通过设置循环频率 即可设置回调函数频率
+    // 雷达接受fps大概为30 消息循环频率大概最高是20Hz
+    ros::Rate loop_rate(20);
+    while(true){ros::spinOnce();loop_rate.sleep();}
 
     return 0;
+  
 }
-

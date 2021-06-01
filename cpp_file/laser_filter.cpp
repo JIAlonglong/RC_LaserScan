@@ -4,18 +4,12 @@
 /********************************************************
  * @brief 指定半径数据少于k个则认为是离散点
  * @param data 数据
+ * @param theta 角度对应数据
  * @param radius 半径 
  * @param k 半径 
  * ******************************************************/
-void remove_outlier(std::vector<float>&data,float radius,int k)
+void remove_outlier(std::vector<float>&data,std::vector<float>&theta,float radius,int k)
 {
-    //初始化角度数据
-    std::vector<float> THETA(DATA_NUM);
-    for(int i =0;i<DATA_NUM;i++)
-   {
-       THETA[i] =-3*PI/4 +ANGLE_INCREMENT*i;
-   }
-
     for(int i =0;i<DATA_NUM;i++)
     {
         if (data[i] ==0)
@@ -30,7 +24,7 @@ void remove_outlier(std::vector<float>&data,float radius,int k)
             {
                 continue;
             }
-            if (sqrt(data[i] * data[i] + data[j] * data[j]- 2 * fabs(cos(THETA[i] - THETA[j]))* data[i] * data[j]) < radius)
+            if (sqrt(data[i] * data[i] + data[j] * data[j]- 2 * fabs(cos(theta[i] - theta[j]))* data[i] * data[j]) < radius)
             {
                 cnt ++;
             }              
@@ -49,16 +43,17 @@ void remove_outlier(std::vector<float>&data,float radius,int k)
  * @param end_index 连续段结束下标vector
  * ******************************************************/
 void splinter_continuous_part(std::vector<float>&data,std::vector<float>&start_index,std::vector<float>&end_index)
-{ 
-    
-    bool start_sign = true;
-
-    for(int i=0;i<DATA_NUM;i++)
+{  
+    bool start_sign = true;//开始的标志
+    for(int i = 0;i < DATA_NUM;i++)
     {
-        if(data[i]==0)
+        
+        if(data[i] == 0)
         {
             if (!start_sign)
             {
+                //没有continue 唯一会导致start_sign = true
+                //即end后又一轮重新开始
                 end_index.push_back(i);
             }
             else
@@ -82,6 +77,7 @@ void splinter_continuous_part(std::vector<float>&data,std::vector<float>&start_i
         start_sign = true;        
     }
     
+    // 避免最后连续段刚好在数据段末尾
     if(start_index.size()!=end_index.size())
     {
         end_index.push_back(DATA_NUM - 1);
@@ -91,17 +87,11 @@ void splinter_continuous_part(std::vector<float>&data,std::vector<float>&start_i
 /********************************************************
  * @brief 分离出圆弧数据
  * @param data 数据 
+ * @param theta 对应角度数据
  * @param deviation 离散点离正确值的差值阈值
  * ******************************************************/
-void get_circle(std::vector<float>&data,float deviation)
+void get_circle(std::vector<float>&data,std::vector<float>&theta,float deviation)
 {
-    //初始化角度数据
-    std::vector<float> THETA(DATA_NUM);
-    for(int i =0;i<DATA_NUM;i++)
-   {
-       THETA[i] =-3*PI/4 +ANGLE_INCREMENT*i;
-   }
-
     std::vector<float>start_index;
     std::vector<float>end_index;
 
@@ -109,12 +99,12 @@ void get_circle(std::vector<float>&data,float deviation)
     for(int i=0;i<start_index.size();i++)
     {
         int middle = static_cast<int>((start_index[i] + end_index[i]-1)/ 2);
-        float x0 = (data[middle] + R) * cos(THETA[middle]);
-        float y0 = (data[middle] + R) * sin(THETA[middle]);
+        float x0 = (data[middle] + R) * cos(theta[middle]);
+        float y0 = (data[middle] + R) * sin(theta[middle]);
         for(int j =start_index[i];j<end_index[i];j++)
         {
-            float x1 = data[j] * cos(THETA[j]);
-            float y1 = data[j] * sin(THETA[j]);
+            float x1 = data[j] * cos(theta[j]);
+            float y1 = data[j] * sin(theta[j]);
             if ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1) - R * R > deviation)
             {
                 data[j] = 0;
@@ -127,7 +117,7 @@ void get_circle(std::vector<float>&data,float deviation)
  * @brief 根据连续段数量滤波
  * @param data 数据
  * ******************************************************/
-void num_filter(std::vector<float>&data)
+void num_filter(std::vector<float>&data,const int MinNumber)
 {
     std::vector<float>start_index;
     std::vector<float>end_index;
@@ -136,7 +126,7 @@ void num_filter(std::vector<float>&data)
 
     for(int i =0;i<start_index.size();i++)
     {
-        if(end_index[i] - start_index[i] - 1 < LASER_DATA_NUM_MIN)
+        if(end_index[i] - start_index[i] - 1 < MinNumber)
         {
             for(int j =start_index[i];j<end_index[i];j++)
             {
@@ -218,10 +208,10 @@ void get_circle_center(std::vector<float> & vec,std::vector<float> &xyR)
  * ******************************************************/
 void index2center(std::vector<float> & start_end_index,std::vector<float>&data,std::vector<float>&xyR)
 {
-    if (start_end_index.size() ==2)
+    if (start_end_index.size() == 2)
     {
         std::vector<float> circle(DATA_NUM);
-        for(int i =0;i<DATA_NUM;i++)
+        for(int i = 0;i < DATA_NUM;i++)
         {
             if(i>=start_end_index[0] && i<start_end_index[1])
             {
@@ -278,3 +268,4 @@ void index2center(std::vector<float> & start_end_index,std::vector<float>&data,s
         }       
     }
 }
+
