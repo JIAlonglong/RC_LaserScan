@@ -7,10 +7,8 @@
 
 const int DATA_NUM = 1081; //数据个数
 const float R = 0.315 / 2 ; // 圆柱半径
-const float DISTANCE_MAX = 4.0 ; //车子离圆柱中心的最大距离
-//const float DISTANCE_BETWEEN_CIRCLE =0.56;//两个圆柱之间的距离
 const float ANGLE_INCREMENT = (3 * PI / 2) / 1080;  // 角度增量
-const int LASER_DATA_NUM_MIN = static_cast<int>(2 * asin(R / DISTANCE_MAX) / ANGLE_INCREMENT);
+//const float DISTANCE_BETWEEN_CIRCLE =0.56;//两个圆柱之间的距离
 
 
 void remove_outlier(std::vector<float>&data,std::vector<float>&theta,float radius,int k);

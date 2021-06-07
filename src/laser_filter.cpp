@@ -1,5 +1,5 @@
 #include "laser_filter.h"
-
+//雷达数据逆时针-3pi/4到 3pi/4
 
 /********************************************************
  * @brief 指定半径数据少于k个则认为是离散点
@@ -268,4 +268,3 @@ void index2center(std::vector<float> & start_end_index,std::vector<float>&data,s
         }       
     }
 }
-

@@ -31,7 +31,7 @@ void change_to_TR_coordinate(float pot_laser_x,float pot_laser_y,short DR_x,shor
     /*
     场地图纸中
     雷达坐标系  上x 左y
-    DR坐标系    左x 下y  DR原点 500 -4300
+    DR坐标系    下x 右y  DR原点 500 -4300 // 
     TR坐标系    上x 左y  TR原点
     最终以TR坐标系 将数据发给TR
     */
@@ -42,7 +42,7 @@ void change_to_TR_coordinate(float pot_laser_x,float pot_laser_y,short DR_x,shor
 
     // 以TR坐标系 雷达和全场定位的偏移 
     const int DrAction2DrLaser_x =0;
-    const int DrAction2DrLaser_y =0; 
+    const int DrAction2DrLaser_y =0;
 
     //米换毫米
     pot_laser_x*=1000;
@@ -50,13 +50,13 @@ void change_to_TR_coordinate(float pot_laser_x,float pot_laser_y,short DR_x,shor
     
     *result_x = static_cast<int>(
                     pot_laser_x + //雷达x对应TR坐标系x
-                    (-DR_y) +     //DR(-y)对应TR坐标系x
+                    (-DR_x) +     //DR(-x)对应TR坐标系x
                     DrStartPoint2TrStartPoint_x + //DR和TR原点偏移量
                     DrAction2DrLaser_x  //action和雷达偏移量
                     );
     *result_y = static_cast<int>(
                     pot_laser_y + //雷达y对应TR坐标系y
-                    (DR_x) +     //DR(x)对应TR坐标系y
+                    (-DR_y) +     //DR(-y)对应TR坐标系y
                     DrStartPoint2TrStartPoint_y + //DR和TR原点偏移量
                     DrAction2DrLaser_y //action和雷达偏移量
                     );
