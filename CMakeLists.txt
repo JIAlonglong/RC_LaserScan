@@ -75,6 +75,7 @@ find_package(catkin REQUIRED COMPONENTS
 #   std_msgs
 # )
 add_message_files(FILES coordinate.msg)
+add_message_files(FILES error.msg)
 generate_messages(DEPENDENCIES std_msgs)
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -162,6 +163,7 @@ src/DR_communication.cpp
 src/save_data.cpp
 src/action.cpp
 src/calibration.cpp
+src/lidar.cpp
 )
 target_link_libraries(pots_coordinates ${catkin_LIBRARIES})
 add_dependencies(pots_coordinates ${PROJECT_NAME}_generate_messages_cpp)

@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/ruijun/catkin_ws_laser/src/pots_coordinates/build/devel/setup.sh

@@ -4,7 +4,9 @@ class Display:
     def __init__(self, monitor,col,row):
         self.col = col
         self.row = row
-        self.fig, self.ax = plt.subplots(self.row, self.col, figsize=(15, 10))
+        #设置squeeze=False 不然在row=1或者col=1时候会报错
+        #plt.subplots reduces the array of Axes to a single axes in case only one column and one row are used.
+        self.fig, self.ax = plt.subplots(self.row, self.col, squeeze=False,figsize=(5*self.col, 5*self.row))
         self.line =[]
         for row in range(self.row):
             for col in range(self.col):
@@ -12,7 +14,7 @@ class Display:
                 self.line.append(line) 
 
     def update(self, data):
-        for i in range(6):
+        for i in range(self.row*self.col):
             self.line[i].set_ydata(data[i])
     
     def dynamic_set_lim(self,data):

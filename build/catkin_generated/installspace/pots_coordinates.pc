@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: pots_coordinates
+Description: Description of pots_coordinates
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

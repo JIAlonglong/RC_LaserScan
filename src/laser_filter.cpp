@@ -1,6 +1,7 @@
 #include "laser_filter.h"
 //雷达数据逆时针-3pi/4到 3pi/4
 
+
 /********************************************************
  * @brief 指定半径数据少于k个则认为是离散点
  * @param data 数据
@@ -8,7 +9,7 @@
  * @param radius 半径 
  * @param k 半径 
  * ******************************************************/
-void remove_outlier(std::vector<float>&data,std::vector<float>&theta,float radius,int k)
+void Filter::remove_outlier(std::vector<float>&data,std::vector<float>&theta,float radius,int k)
 {
     for(int i =0;i<DATA_NUM;i++)
     {
@@ -42,7 +43,7 @@ void remove_outlier(std::vector<float>&data,std::vector<float>&theta,float radiu
  * @param start_index 连续段开始下标vector
  * @param end_index 连续段结束下标vector
  * ******************************************************/
-void splinter_continuous_part(std::vector<float>&data,std::vector<float>&start_index,std::vector<float>&end_index)
+void Filter::splinter_continuous_part(std::vector<float>&data,std::vector<float>&start_index,std::vector<float>&end_index)
 {  
     bool start_sign = true;//开始的标志
     for(int i = 0;i < DATA_NUM;i++)
@@ -90,7 +91,7 @@ void splinter_continuous_part(std::vector<float>&data,std::vector<float>&start_i
  * @param theta 对应角度数据
  * @param deviation 离散点离正确值的差值阈值
  * ******************************************************/
-void get_circle(std::vector<float>&data,std::vector<float>&theta,float deviation)
+void Filter::get_circle(std::vector<float>&data,std::vector<float>&theta,float deviation)
 {
     std::vector<float>start_index;
     std::vector<float>end_index;
@@ -117,7 +118,7 @@ void get_circle(std::vector<float>&data,std::vector<float>&theta,float deviation
  * @brief 根据连续段数量滤波
  * @param data 数据
  * ******************************************************/
-void num_filter(std::vector<float>&data,const int MinNumber)
+void Filter::num_filter(std::vector<float>&data,const int MinNumber)
 {
     std::vector<float>start_index;
     std::vector<float>end_index;
@@ -141,7 +142,7 @@ void num_filter(std::vector<float>&data,const int MinNumber)
  * @param vec 数据 
  * @param xyR 拟合输出的圆心坐标和半径
  * ******************************************************/
-void get_circle_center(std::vector<float> & vec,std::vector<float> &xyR)
+void Filter::get_circle_center(std::vector<float> & vec,std::vector<float> &xyR)
 {
 	int num = 0; //用于计算被过滤掉的数据个数
 
@@ -206,7 +207,7 @@ void get_circle_center(std::vector<float> & vec,std::vector<float> &xyR)
  * @param data 数据 
  * @param xyR 拟合输出的圆心坐标和半径
  * ******************************************************/
-void index2center(std::vector<float> & start_end_index,std::vector<float>&data,std::vector<float>&xyR)
+void Filter::index2center(std::vector<float> & start_end_index,std::vector<float>&data,std::vector<float>&xyR)
 {
     if (start_end_index.size() == 2)
     {
@@ -267,4 +268,75 @@ void index2center(std::vector<float> & start_end_index,std::vector<float>&data,s
             xyR[2]=xyR2[2];
         }       
     }
+}
+
+void Filter::median_filter(std::vector<float> & nowData,std::vector<float> & lastData)
+{
+    //时域均值滤波
+    for(int i=0;i<DATA_NUM;i++)
+    {
+        if(lastData[i]!=0)
+        {
+            nowData[i] = (lastData[i]+nowData[i])/2;
+        }
+        lastData[i] =nowData[i];
+    }
+}
+
+void Filter::easy_filter(std::vector<float> & data,std::vector<float>&theta,
+                        bool radiusFilter,float r,
+                        bool angleFilter,float startAngle,float endAngle,
+                        bool xFilter,float startX,float endX,
+                        bool yFilter,float startY,float endY
+                        )
+{
+    for(int i = 0;i < DATA_NUM;i++)
+    {
+        //半径滤波
+        if(radiusFilter)
+        {
+            if(data[i] > r)
+            {
+                data[i] = 0;
+            }
+        }
+
+        //角度滤波
+        if(angleFilter)
+        {
+            if((theta[i]<startAngle) || (theta[i]>endAngle))
+            {
+                data[i] = 0;
+            }
+        }
+
+        //x滤波
+        if(xFilter)
+        {
+            if((cos(theta[i])*data[i]<startX) || (cos(theta[i])*data[i]>endX))
+            {
+                data[i] =0;
+            }
+        }
+
+        //y滤波
+        if(xFilter)
+        {
+            if((sin(theta[i])*data[i]<startY) || (sin(theta[i])*data[i]>endY))
+            {
+                data[i] =0;
+            }
+        }        
+    }
+
+}
+
+
+Filter::Filter()
+{
+
+}
+Filter::~Filter()
+{
+
 }
