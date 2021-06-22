@@ -1,21 +1,35 @@
 #include "calibration.h"
+void Calibrate::init(bool flag)
+{
+    enable = flag;
+    if(enable)
+    {
+        printf("Calibrate mode\n");
+        fflush(stdout);
+    }
+    else
+    {
+        printf("Running code mode\n");
+        fflush(stdout);
+    }
+}
 
 void Calibrate::calibrate(std::vector<float> &laser_data,
                           std::vector<float> &theta,
-                          Filter filter)
+                          Filter &filter)
 {
     //滤波
     float CalibDistanceMax =1.0;
-    for(int i = 0;i < DATA_NUM;i++)
-    {
-        if(laser_data[i] > CalibDistanceMax){laser_data[i] = 0;} //半径滤波
-        if((theta[i]<(-PI)/2) || (theta[i]>PI/2)){laser_data[i] = 0;}//角度滤波           
-    }
-
+    filter.easy_filter(laser_data,theta,
+                            true,CalibDistanceMax,
+                            true,(-PI/2),(PI/2),
+                            false,0,0,
+                            false,0,0);
+	
     //获得连续段
     std::vector<float> start_index;//连续段开始坐标
     std::vector<float> end_index;//连续段结束坐标
-    filter.splinter_continuous_part(laser_data,start_index,end_index);
+    splinter_continuous_part(laser_data,start_index,end_index);
 
     if(start_index.size()!=1 ||end_index.size()!=1)
     {
@@ -47,16 +61,9 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
                 
                 float x;
                 float yaw;
-                if(alpha<PI/2)
-                {
-                    x = r2 * sin(alpha);
-                    yaw = PI/2 - alpha - theta1;
-                }
-                else
-                {
-                    x = r2 * sin(PI - alpha);
-                    yaw = PI/2 - alpha - theta1;//负数
-                }
+
+                x = r2 * sin(alpha);
+                yaw = PI/2 - alpha - theta1;//alpha<PI/2的话就是负数
                 
                 if(!isnan(x) && !(isnan(yaw)))
                 {
@@ -74,7 +81,8 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
                 {
                     calibrate_x_yaw = false;
                     calibrate_y = true;
-                    ROS_INFO("calibrate (x,yaw) successfully laser_x:%4f laser_yaw:%4f",laser_x,laser_yaw);
+                    printf("calibrate (x,yaw) successfully laser_x:%4f laser_yaw:%4f\n",laser_x,laser_yaw);
+		            fflush(stdout);
                 }
                 else
                 {
@@ -93,23 +101,28 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
         {  
             float y_sum=0;
             int offset = 5; //平板标定最旁边的数据跳变很大要舍去
-            int index2=end_index[0]-start_index[0] - 2*offset;
+            int index2=end_index[0] - start_index[0] - 2*offset;
             
-            for(int i=1;i<=index2;i++)
-            {
-                float r3 = laser_data[end_index[0]-offset];
-                float r4 = laser_data[end_index[0]-offset-i];
-                float theta2 = (1 / Resolution)*(PI / 180) * i;
-                float y1 =sqrt(r3*r3+r4*r4-2*r3*r4*cos(theta2));
-                float y2 =r4*sin(theta[end_index[0]-offset-i]+laser_yaw);
 
-                float delta_theta =(1 / Resolution)*(PI / 180) * offset;
-                //float deltay=0;
-                float deltay=r3*sin(delta_theta)/(sin(asin(laser_x/r3)+delta_theta));
-                //float deltay =	sqrt(laser_data[end_index[0]]*laser_data[end_index[0]]+r3*r3-2*r3*laser_data[end_index[0]]*cos(delta_theta));	
-                ROS_INFO("%f %f %f %f %f %f",deltay,delta_theta,r3,asin(laser_x/r3),sin(asin(laser_x/r3)+delta_theta),r4);                
-                //ROS_INFO("%f",deltay);		
-                float y = y1+y2+deltay;
+            for(int i=0;i<index2;i++)
+            {
+                float r3 = laser_data[end_index[0]-offset-i];
+                float theta2 = theta[end_index[0]-offset-i]+laser_yaw;
+                float y1 =sin(theta2)*r3;
+                float theta3 =(1 / Resolution)*(PI / 180) * (i+offset);
+                float theta4 = PI/2 - theta2 -theta3;
+                float y2 = r3*sin(theta3)/sin(theta4);
+                float y= y1 + y2;
+
+                // float r3 = laser_data[end_index[0]-offset];
+                // float r4 = laser_data[end_index[0]-offset-i];
+                // float theta2 = (1 / Resolution)*(PI / 180) * i;
+                // float y1 =sqrt(r3*r3+r4*r4-2*r3*r4*cos(theta2));
+                // float y2 =r4*sin(theta[end_index[0]-offset-i]+laser_yaw);
+                // float delta_theta =(1 / Resolution)*(PI / 180) * offset;
+                // float deltay=r3*sin(delta_theta)/(sin(asin(laser_x/r3)+delta_theta));		
+                // float y = y1+y2+deltay;
+                
                 if(!isnan(y))
                 {
                     y_sum+=y;
@@ -124,7 +137,9 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
                 {
                     calibrate_y = false;
                     success = true;
-                    ROS_INFO("calibrate y successfully laser_y:%4f",laser_y);
+                    printf("calibrate y successfully laser_y:%4f\n",laser_y);
+                    fflush(stdout);
+                    isSave =true;
 
                     DrActionYaw = laser_yaw;
                     DrAction2DrLaser_x=DrAction2Calib_x-laser_x;
@@ -148,22 +163,30 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
     }
 }
 
-void Calibrate::save(std::string date)
-{
-    std::string save_path ="./data/calib/calib_"+date+".txt";
+void Calibrate::save()
+{  
     std::ofstream out(save_path,std::ios::app);
-    out <<"x:"<<DrAction2DrLaser_x<<"\n"
-        <<"y:"<<DrAction2DrLaser_y<<"\n"
-        <<"yaw:"<<DrActionYaw<<"\n";
+    out <<"x: "<<DrAction2DrLaser_x<<"\n"
+        <<"y: "<<DrAction2DrLaser_y<<"\n"
+        <<"yaw: "<<DrActionYaw<<"\n";
     out.close();
 
-    ROS_INFO("success x:%f y:%f yaw:%f",
+    printf("success x:%f y:%f yaw:%f\n",
             DrAction2DrLaser_x,
             DrAction2DrLaser_y,
             DrActionYaw);
-
-    //enable = false;
+    fflush(stdout);
+    
+    isSave = false;
 }
+
+void Calibrate::read()
+{
+    ros::param::get("x",DrAction2DrLaser_x);
+    ros::param::get("y",DrAction2DrLaser_y);
+    ros::param::get("yaw",DrActionYaw);
+}
+
 
 
 

@@ -4,11 +4,11 @@
 #include <vector>
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
-#include "laser_filter.h"
+#include "filter.h"
 
 class Lidar
 {  
-    public:       
+    public:      
 
         std::vector<float> THETA{std::vector<float>(DATA_NUM)}; //角度数据
         std::vector<float> nowData{std::vector<float>(DATA_NUM)};//目前的数据

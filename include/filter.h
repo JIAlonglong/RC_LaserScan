@@ -2,7 +2,7 @@
 #include <iostream>
 #include <math.h>
 #include <vector>
-
+#include "get_center.h"
 #define PI acos(-1)
 
 const int DATA_NUM = 1081; //数据个数
@@ -19,11 +19,8 @@ class Filter
         ~Filter();
 
         void remove_outlier(std::vector<float>&data,std::vector<float>&theta,float radius,int k);
-        void splinter_continuous_part(std::vector<float>&data,std::vector<float>&start_index,std::vector<float>&end_index);
         void get_circle(std::vector<float>&data,std::vector<float>&theta,float deviation);
         void num_filter(std::vector<float>&data,const int MinNumber);
-        void get_circle_center(std::vector<float> & vec,std::vector<float> &xyR);
-        void index2center(std::vector<float> & start_end_index,std::vector<float>&data,std::vector<float>&xyR);
         void median_filter(std::vector<float> & nowData,std::vector<float> & lastData);
         void easy_filter(std::vector<float> & data,std::vector<float>&theta,
                         bool radiusFilter,float r,

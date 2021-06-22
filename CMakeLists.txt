@@ -154,16 +154,16 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 add_executable(pots_coordinates 
-src/laser_filter.cpp 
-src/kalman.cpp 
+src/filter.cpp 
 src/main.cpp
-src/coordinate_convert.cpp
+src/coordinate.cpp
 src/TR_communication.cpp
 src/DR_communication.cpp
-src/save_data.cpp
+src/save.cpp
 src/action.cpp
 src/calibration.cpp
 src/lidar.cpp
+src/get_center.cpp
 )
 target_link_libraries(pots_coordinates ${catkin_LIBRARIES})
 add_dependencies(pots_coordinates ${PROJECT_NAME}_generate_messages_cpp)
