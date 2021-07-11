@@ -23,8 +23,7 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
     filter.easy_filter(laser_data,theta,
                             true,CalibDistanceMax,
                             true,(-PI/2),(PI/2),
-                            false,0,0,
-                            false,0,0);
+                            false,0,0,0,0,0);
 	
     //获得连续段
     std::vector<float> start_index;//连续段开始坐标
@@ -65,7 +64,7 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
                 x = r2 * sin(alpha);
                 yaw = PI/2 - alpha - theta1;//alpha<PI/2的话就是负数
                 
-                if(!isnan(x) && !(isnan(yaw)))
+                if(!(std::isnan(x)) && !(std::isnan(yaw)))
                 {
                     x_sum += x;
                     yaw_sum += yaw;   
@@ -99,6 +98,7 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
             
         if(calibrate_y)
         {  
+	    
             float y_sum=0;
             int offset = 5; //平板标定最旁边的数据跳变很大要舍去
             int index2=end_index[0] - start_index[0] - 2*offset;
@@ -123,7 +123,7 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
                 // float deltay=r3*sin(delta_theta)/(sin(asin(laser_x/r3)+delta_theta));		
                 // float y = y1+y2+deltay;
                 
-                if(!isnan(y))
+                if(!(std::isnan(y)))
                 {
                     y_sum+=y;
                 }
@@ -142,8 +142,8 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
                     isSave =true;
 
                     DrActionYaw = laser_yaw;
-                    DrAction2DrLaser_x=DrAction2Calib_x-laser_x;
-                    DrAction2DrLaser_y=DrAction2Calib_y-(laser_y-BoardWidth/2);
+                    DrAction2DrLaser_x=DrAction2Calib_x-laser_x;//偏上为正
+                    DrAction2DrLaser_y=DrAction2Calib_y-(laser_y-BoardWidth/2);//偏右为正
                 }
                 else
                 {
@@ -165,7 +165,7 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
 
 void Calibrate::save()
 {  
-    std::ofstream out(save_path,std::ios::app);
+    std::ofstream out(save_path,std::ios::out);
     out <<"x: "<<DrAction2DrLaser_x<<"\n"
         <<"y: "<<DrAction2DrLaser_y<<"\n"
         <<"yaw: "<<DrActionYaw<<"\n";
@@ -185,6 +185,7 @@ void Calibrate::read()
     ros::param::get("x",DrAction2DrLaser_x);
     ros::param::get("y",DrAction2DrLaser_y);
     ros::param::get("yaw",DrActionYaw);
+
 }
 
 

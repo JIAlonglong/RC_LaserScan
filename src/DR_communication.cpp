@@ -12,12 +12,13 @@ boost::system::error_code dr_err;
 const unsigned char ender[2] = {0x0d, 0x0a};
 const unsigned char header[2] = {0x55, 0xaa};
 
+
 //发送共用体
 union sendData
 {
 	short d;
 	unsigned char data[2];
-}x_destination,y_destination;
+}x_position,y_position,angle;
 
 //接收共用体（-32767 - +32768）
 union receiveData
@@ -40,42 +41,48 @@ void DR_SerialInit()
     dr_sp.set_option(serial_port::character_size(8));    
 }
 
+
 /********************************************************
-函数功能：将x目的距离，y目的距离发送
-入口参数：x目的距离，y目的距离
+函数功能：
+入口参数：
 出口参数：
 ********************************************************/
-void DR_SerialWrite(short x, short y,unsigned char ctrlFlag)
+void DR_SerialWrite(int x_pos, int y_pos,int theta,unsigned char ctrlFlag)
 {
-    unsigned char buf[11] = {0};//
+    unsigned char buf[13] = {0};//
     int i, length = 0;
 
-    x_destination.d  = x;
-    y_destination.d = y;
+    x_position.d = x_pos;
+    y_position.d = y_pos;
+    angle.d = theta;
 
     // 设置消息头
     for(i = 0; i < 2; i++)
         buf[i] = header[i];             //buf[0]  buf[1]
     
-    // 设置机器人左右轮速度
-    length = 5;
+    // 设置发送长度
+    length = 7;
     buf[2] = length;                    //buf[2]
+    
+    //发送的数据
     for(i = 0; i < 2; i++)
     {
-        buf[i + 3] = x_destination.data[i];  //buf[3] buf[4]
-        buf[i + 5] = y_destination.data[i]; //buf[5] buf[6]
+        buf[i + 3] = x_position.data[i];  //buf[3] buf[4]
+        buf[i + 5] = y_position.data[i]; //buf[5] buf[6]
+	    buf[i + 7] = angle.data[i]; //buf[7] buf[8]
     }
     // 预留控制指令
-    buf[3 + length - 1] = ctrlFlag;       //buf[7]
+    buf[3 + length - 1] = ctrlFlag;       //buf[9]
 
     // 设置校验值、消息尾
-    buf[3 + length] = DR_getCrc8(buf, 3 + length);//buf[8]
-    buf[3 + length + 1] = ender[0];     //buf[9]
-    buf[3 + length + 2] = ender[1];     //buf[10]
+    buf[3 + length] = DR_getCrc8(buf, 3 + length);//buf[10]
+    buf[3 + length + 1] = ender[0];     //buf[11]
+    buf[3 + length + 2] = ender[1];     //buf[12]
 
     // 通过串口下发数据
     boost::asio::write(dr_sp, boost::asio::buffer(buf));
 }
+
 /********************************************************
 函数功能：从下位机读取dr全场x，y，yaw
 入口参数：机器人x、y、yaw，预留控制位

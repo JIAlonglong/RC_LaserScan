@@ -1,4 +1,14 @@
-# -*- coding: utf-8 -*-
+# !usr/bin/env python
+# -*- coding:utf-8 -*-
+
+'''
+ Description: 
+ Version: 1.0
+ Autor: bonbon
+ Date: 2021-06-20 19:31:27
+ LastEditors: bonbon
+ LastEditTime: 2021-07-08 17:11:25
+'''
 import numpy as np
 class Error:
     def __init__(self,col,row):

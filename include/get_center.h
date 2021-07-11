@@ -11,4 +11,4 @@ void distributeData(std::vector<float> &start_index,
                     std::vector<float> &middle,
                     std::vector<float> &right,
                     std::vector<float> &theta,
-                    float y);
+                    short x);

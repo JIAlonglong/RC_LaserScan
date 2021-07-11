@@ -8,6 +8,7 @@
  * @param radius 半径 
  * @param k 半径 
  * ******************************************************/
+
 void Filter::remove_outlier(std::vector<float>&data,std::vector<float>&theta,float radius,int k)
 {
     for(int i =0;i<DATA_NUM;i++)
@@ -107,11 +108,13 @@ void Filter::median_filter(std::vector<float> & nowData,std::vector<float> & las
     }
 }
 
-void Filter::easy_filter(std::vector<float> & data,std::vector<float>&theta,
+void Filter::easy_filter(std::vector<float> &data,std::vector<float>&theta,
                         bool radiusFilter,float r,
                         bool angleFilter,float startAngle,float endAngle,
-                        bool xFilter,float startX,float endX,
-                        bool yFilter,float startY,float endY
+                        bool xyFilter,
+                        float startX,float endX,
+                        float startY,float endY,
+                        float angle
                         )
 {
     for(int i = 0;i < DATA_NUM;i++)
@@ -134,25 +137,54 @@ void Filter::easy_filter(std::vector<float> & data,std::vector<float>&theta,
             }
         }
 
-        //x滤波
-        if(xFilter)
+        
+        //xy滤波
+        if(xyFilter)
         {
-            if((cos(theta[i])*data[i]<startX) || (cos(theta[i])*data[i]>endX))
+            float x=cos(theta[i])*data[i];
+            float y =sin(theta[i])*data[i];
+            coordinate_rotation(&x,&y,angle);
+
+            //x滤波
+            if((x<startX) || (x>endX))
             {
                 data[i] =0;
             }
-        }
-
-        //y滤波
-        if(xFilter)
-        {
-            if((sin(theta[i])*data[i]<startY) || (sin(theta[i])*data[i]>endY))
+        
+            //y滤波
+            if((y<startY) || (y>endY))
             {
                 data[i] =0;
             }
         }        
     }
+}
 
+void Filter::kalman_filter(std::vector<float> & nowData,
+                    std::vector<float> & lastData,
+                    std::vector<float>& theta,
+                    short x,short y)
+{
+    
+    for(int i=0;i<DATA_NUM;i++)
+    {
+    
+        //预测
+        float s = sqrt(
+                    pow(((x/1000.0)-(cos(theta[i])*lastData[i])),2) +
+                    pow(((y/1000.0)-(sin(theta[i])*lastData[i])),2)
+                    );
+
+        //计算方差
+        float var =sqrt(last_var[i]*last_var[i]+predict_var*predict_var);
+
+        //计算最优值 并输出
+        nowData[i] =((var*var)*nowData[i] + (measure_var*measure_var)*s)/
+                    (var*var+measure_var*measure_var);
+
+        //更新偏差
+        last_var[i] =sqrt((1-var*var/(var*var+measure_var*measure_var)*var*var));
+    }
 }
 
 

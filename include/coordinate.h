@@ -29,7 +29,7 @@ class Coordinate
   
 };
 
-void coordinate_rotation(float *x,float *y,float yaw);
+void coordinate_rotation(float *x,float *y,float theta);
 void change2worldCoordinate(float pot_laser_x,float pot_laser_y,
                             short DR_x,short DR_y,
                             float DrAction2DrLaser_x,float DrAction2DrLaser_y,

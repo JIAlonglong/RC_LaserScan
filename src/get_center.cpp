@@ -201,75 +201,106 @@ void distributeData(std::vector<float> &start_index,
                     std::vector<float> &middle,
                     std::vector<float> &right,
                     std::vector<float> &theta,
-                    float y)
+                    short x)
 {
-    if(start_index.size() ==3)
+		//TR坐标系 上x 左y
+        if(start_index.size() ==3)
         {
-            right.push_back(start_index[0]);
-            right.push_back(end_index[0]);
-            middle.push_back(start_index[1]);
-            middle.push_back(end_index[1]);
-            left.push_back(start_index[2]);
-            left.push_back(end_index[2]);
+            right[0]=start_index[0];
+            right[1]=end_index[0];
+            middle[0]=start_index[1];
+            middle[1]=end_index[1];
+            left[0]=start_index[2];
+            left[1]=end_index[2];
         }
+		
         else if(start_index.size() ==2)
         {
-            if(y>0)
+            if(x>-500)
             {
-                right.push_back(start_index[0]);
-                right.push_back(end_index[0]);
-                middle.push_back(start_index[1]);
-                middle.push_back(end_index[1]);
+                right[0]=start_index[0];
+                right[1]=end_index[0];
+                middle[0]=start_index[1];
+                middle[1]=end_index[1];
+                left[0]=0;
+                left[1]=0;
             }
             else
             {
-                middle.push_back(start_index[0]);
-                middle.push_back(end_index[0]);
-                left.push_back(start_index[1]);
-                left.push_back(end_index[1]);
+                right[0]=0;
+                right[1]=0;
+                middle[0]=start_index[0];
+                middle[1]=end_index[0];
+                left[0]=start_index[1];
+                left[1]=end_index[1];
             }    
         }
+		
         else if(start_index.size() ==1)
         {
-            if(y>2000)
+            if(x<-3000)
             {
-                right.push_back(start_index[0]);
-                right.push_back(end_index[0]);         
+                right[0]=0;
+                right[1]=0;
+                middle[0]=0;
+                middle[1]=0;
+                left[0]=start_index[0];
+                left[1]=end_index[0];         
             }
-            else if(y>-500)
+            else if(x<-500)
             {
                 if(theta[start_index[0]]<0)
                 {
-                    right.push_back(start_index[0]);
-                    right.push_back(end_index[0]);
+                    right[0]=0;
+                    right[1]=0;
+                    middle[0]=start_index[0];
+                    middle[1]=end_index[0];
+                    left[0]=0;
+                    left[1]=0;
                 }
                 else
                 {
-                    middle.push_back(start_index[0]);
-                    middle.push_back(end_index[0]);
+                    right[0]=0;
+                    right[1]=0;
+                    middle[0]=0;
+                    middle[1]=0;
+                    left[0]=start_index[0];
+                    left[1]=end_index[0];
                 }
             }
-            else if(y>(-3000))
+            else if(x<2000)
             {
                 if(theta[start_index[0]]<0)
                 {
-                    middle.push_back(start_index[0]);
-                    middle.push_back(end_index[0]);
+                    right[0]=start_index[0];
+                    right[1]=end_index[0];
+                    middle[0]=0;
+                    middle[1]=0;
+                    left[0]=0;
+                    left[1]=0;
                 }
                 else
                 {
-                    left.push_back(start_index[0]);
-                    left.push_back(end_index[0]);
+                    right[0]=0;
+                    right[1]=0;
+                    middle[0]=start_index[0];
+                    middle[1]=end_index[0];
+                    left[0]=0;
+                    left[1]=0;
                 }
             }
             else
             {
-                left.push_back(start_index[0]);
-                left.push_back(end_index[0]); 
+                right[0]=start_index[0];
+                right[1]=end_index[0]; 
+                middle[0]=0;
+                middle[1]=0;
+                left[0]=0;
+                left[1]=0;
             }
         }
         else
         {
-            ROS_ERROR(" 检测不到壶或者多于3个壶！");
+            ROS_ERROR("distributeData error");
         }
 }

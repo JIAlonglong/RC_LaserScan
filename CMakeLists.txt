@@ -164,7 +164,11 @@ src/action.cpp
 src/calibration.cpp
 src/lidar.cpp
 src/get_center.cpp
+src/pot_grab.cpp
 )
+
+
+
 target_link_libraries(pots_coordinates ${catkin_LIBRARIES})
 add_dependencies(pots_coordinates ${PROJECT_NAME}_generate_messages_cpp)
 #############

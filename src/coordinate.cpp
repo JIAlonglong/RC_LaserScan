@@ -5,13 +5,16 @@
  * @brief 坐标系旋转 雷达相对坐标系旋转到世界坐标系
  * @param x1 雷达相对坐标系x坐标
  * @param y1 雷达相对坐标系y坐标
- * @param yaw 偏航角 往左旋转 往右旋转
+ * @param theta 偏航角 向左转为负 向右转为正
  * ******************************************************/
-void coordinate_rotation(float *x,float *y,float yaw)
+void coordinate_rotation(float *x,float *y,float theta)
 {
-    float rho = sqrt((*x)*(*x)+(*y)*(*y));
-    float x1 = rho *cos(atan((*y)/(*x))+yaw);
-    float y1 = rho *sin(atan((*y)/(*x))+yaw);
+    // float rho = sqrt((*x)*(*x)+(*y)*(*y));
+    // float x1 = rho *cos(atan((*y)/(*x))+theta);
+    // float y1 = rho *sin(atan((*y)/(*x))+theta);
+    
+    float x1 =(*x)*cos(theta)-(*y)*sin(theta);
+    float y1 =(*y)*cos(theta)+(*x)*sin(theta);
 
     *x = x1;
     *y = y1;
@@ -42,7 +45,7 @@ void change2worldCoordinate(float pot_laser_x,float pot_laser_y,
         /*
         场地图纸中
         雷达坐标系   上x 左y
-        DR坐标系    下x 右y  DR原点 500 -4300 // 
+        DR坐标系    右x 上y  DR原点  // 
         TR坐标系    上x 左y  TR原点
         最终以TR坐标系 将数据发给TR
         */
@@ -51,21 +54,21 @@ void change2worldCoordinate(float pot_laser_x,float pot_laser_y,
         const int DrStartPoint2TrStartPoint_x = -11000;
         const int DrStartPoint2TrStartPoint_y =  5000; 
 
-        //米换毫米
-        pot_laser_x *= 1000;
-        pot_laser_y *= 1000;
+        //米换毫米 float型乘完变成int型了
+        // pot_laser_x *= 1000;
+        // pot_laser_y *= 1000;
         
         *result_x = static_cast<int>(
-                        pot_laser_x + //雷达x对应TR坐标系x
-                        (-DR_x) +     //DR(-x)对应TR坐标系x
-                        DrStartPoint2TrStartPoint_x + //DR和TR原点偏移量
-                        DrAction2DrLaser_x  //action和雷达偏移量
+                        pot_laser_x*1000 + //雷达x对应TR坐标系x
+                        (DR_y) +     //DR(y)对应TR坐标系x
+                        (DrStartPoint2TrStartPoint_x) + //DR和TR原点偏移量
+                        (DrAction2DrLaser_x*1000.0)  //action和雷达偏移量
                         );
         *result_y = static_cast<int>(
-                        pot_laser_y + //雷达y对应TR坐标系y
-                        (-DR_y) +     //DR(-y)对应TR坐标系y
-                        DrStartPoint2TrStartPoint_y + //DR和TR原点偏移量
-                        DrAction2DrLaser_y //action和雷达偏移量
+                        pot_laser_y*1000 + //雷达y对应TR坐标系y
+                        (-DR_x) +     //DR(-x)对应TR坐标系y
+                        (DrStartPoint2TrStartPoint_y) + //DR和TR原点偏移量
+                        (DrAction2DrLaser_y*1000.0) //action和雷达偏移量
                         );
     }
 }
