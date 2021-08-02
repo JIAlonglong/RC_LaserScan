@@ -1,5 +1,15 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
+# !usr/bin/env python
+# -*- coding:utf-8 -*-
+
+'''
+Description: 
+Version: 1.0
+Autor: bonbon
+Date: 2021-08-01 19:58:22
+LastEditors: bonbon
+LastEditTime: 2021-08-02 14:08:32
+'''
+
 import rospy
 from pots_coordinates.msg import error
 from error import Error

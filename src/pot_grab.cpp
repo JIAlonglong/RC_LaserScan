@@ -1,4 +1,5 @@
 #include "pot_grab.h"
+
 void DistanceIndex::init(std::vector<float> &xyR,unsigned char num)
 {
     //只用于比较就不用sqrt
@@ -6,6 +7,12 @@ void DistanceIndex::init(std::vector<float> &xyR,unsigned char num)
     index =num;
 }
 
+/**
+ * @brief: 根据下标确定发送要抓的壶的信息
+ * @param {unsigned char} num 下标
+ * @return {*}
+ * @author: bonbon
+ */
 void PotGrab::preSend(unsigned char num,Coordinate coordinate)
 {
     //左负角
@@ -20,6 +27,8 @@ void PotGrab::preSend(unsigned char num,Coordinate coordinate)
             //注意转到DR坐标系 y=x  x=-y
             y = coordinate.right_xyR[0]*1000.0;
             x = -coordinate.right_xyR[1]*1000.0;
+            y=limit(y,0,2000);
+            x=limit(x,0,2000);
             index = num;
 
             if(x0==coordinate.right_x)
@@ -28,11 +37,12 @@ void PotGrab::preSend(unsigned char num,Coordinate coordinate)
             }
             else
             {
-                alpha =-atan(
+                alpha =atan(
                     (y0-coordinate.right_y)*1.0/
                     (x0-coordinate.right_x)
                     );
             }
+            alpha =dlimit(alpha,-PI/2,PI/2);
             // ROS_INFO("%d %d %d %d %f",coordinate.right_x,x0,coordinate.right_y,y0,alpha);
             break;
         }
@@ -44,6 +54,8 @@ void PotGrab::preSend(unsigned char num,Coordinate coordinate)
             //注意转到DR坐标系 y=x  x=-y
             y = coordinate.middle_xyR[0]*1000.0;
             x = -coordinate.middle_xyR[1]*1000.0;
+            y=limit(y,0,2000);
+            x=limit(x,0,2000);
             index = num;
 
             
@@ -53,11 +65,12 @@ void PotGrab::preSend(unsigned char num,Coordinate coordinate)
             }
             else
             {
-                alpha =-atan(
+                alpha =atan(
                     (y0-coordinate.middle_y)*1.0/
                     (x0-coordinate.middle_x)
                     );
             }
+            alpha =dlimit(alpha,-PI/2,PI/2);
             // ROS_INFO("%d %d %d %d %f",coordinate.middle_x,x0,coordinate.middle_y,y0,alpha);
             break;
         }
@@ -69,6 +82,8 @@ void PotGrab::preSend(unsigned char num,Coordinate coordinate)
             //注意转到DR坐标系 y=x  x=-y
             y = coordinate.left_xyR[0]*1000.0;
             x = -coordinate.left_xyR[1]*1000.0;
+            y=limit(y,0,2000);
+            x=limit(x,0,2000);
             index = num;
 
             if(x0==coordinate.left_x)
@@ -77,11 +92,12 @@ void PotGrab::preSend(unsigned char num,Coordinate coordinate)
             }
             else
             {
-                alpha =-atan(
+                alpha =atan(
                     (y0-coordinate.left_y)*1.0/
                     (x0-coordinate.left_x)
                     );
             }
+            alpha =dlimit(alpha,-PI/2,PI/2);
             // ROS_INFO("%d %d %d %d %f",coordinate.left_x,x0,coordinate.left_y,y0,alpha);
             break;
         }

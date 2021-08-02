@@ -1,0 +1,18 @@
+<launch>
+
+	<!-- Load param /-->
+	<rosparam command="load" file="$(find rc_laserscan)/config/calib.yaml"/>
+	
+	<!-- get laser data /-->
+	<node name="laser_init" pkg="urg_node" type="urg_node" args="_ip_address:=192.168.1.11" output="screen" />
+	
+	<!-- tf and transform /-->
+	<node name="pub_tf" pkg="rc_laserscan" type="pub_tf" output="screen"/>
+	<node name="transform" pkg="rc_laserscan" type="transform" output="screen" />
+	
+	<!-- run code /-->
+	<node name="main" pkg="rc_laserscan" type="main" output="screen">
+    <param name="calib" value="false"/>
+  	</node>
+	  
+</launch>

@@ -1,4 +1,11 @@
 #include "calibration.h"
+
+/**
+ * @brief: 根据flag决定是否标定
+ * @param {bool} flag
+ * @return {*}
+ * @author: bonbon
+ */
 void Calibrate::init(bool flag)
 {
     enable = flag;
@@ -14,6 +21,14 @@ void Calibrate::init(bool flag)
     }
 }
 
+/**
+ * @brief: 标定函数
+ * @param laser_data 雷达数据
+ * @param theta 角度数据
+ * @param filter 滤波类
+ * @return {*}
+ * @author: bonbon
+ */
 void Calibrate::calibrate(std::vector<float> &laser_data,
                           std::vector<float> &theta,
                           Filter &filter)
@@ -163,6 +178,12 @@ void Calibrate::calibrate(std::vector<float> &laser_data,
     }
 }
 
+/**
+ * @brief: 保存标定数据到yaml里 直接ros参数服务器读取
+ * @param {*}
+ * @return {*}
+ * @author: bonbon
+ */
 void Calibrate::save()
 {  
     std::ofstream out(save_path,std::ios::out);
@@ -180,23 +201,33 @@ void Calibrate::save()
     isSave = false;
 }
 
+/**
+ * @brief: 读取标定数据
+ * @param {*}
+ * @return {*}
+ * @author: bonbon
+ */
 void Calibrate::read()
 {
     ros::param::get("x",DrAction2DrLaser_x);
     ros::param::get("y",DrAction2DrLaser_y);
     ros::param::get("yaw",DrActionYaw);
-
 }
 
 
-
-
+/**
+ * @brief: 构造函数初始化标定error
+ * @param {*}
+ * @return {*}
+ * @author: bonbon
+ */
 Calibrate::Calibrate()
 {
     error_msg.calib_x_error=0;
     error_msg.calib_y_error=0;
     error_msg.calib_yaw_error=0;
 }
+
 
 Calibrate::~Calibrate()
 {

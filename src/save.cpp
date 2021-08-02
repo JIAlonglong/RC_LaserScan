@@ -1,5 +1,11 @@
 #include "save.h"
 
+/**
+ * @brief: 将数据保存
+ * @param {*}
+ * @return {*}
+ * @author: bonbon
+ */
 void save_data(std::string path,
                int num,
                std::vector<float> &raw_data,
@@ -10,7 +16,7 @@ void save_data(std::string path,
                float lidar_left_x,float lidar_left_y,
                float lidar_middle_x,float lidar_middle_y,
                float lidar_right_x,float lidar_right_y,
-               short x,short y,short yaw,
+               short x,short y,double yaw,
                int pot_x,int pot_y,double angle,unsigned char index
                )
 {
@@ -50,6 +56,12 @@ void save_data(std::string path,
     out.close();
 }
 
+/**
+ * @brief: 获取日期 用于log命名
+ * @param {*}
+ * @return {*}
+ * @author: bonbon
+ */
 std::string date_init(void)
 {
     time_t now = time(0);

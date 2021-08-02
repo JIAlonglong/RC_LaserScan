@@ -2,15 +2,15 @@
 
 using namespace std;
 using namespace boost::asio;
+
 //串口相关对象
 boost::asio::io_service tr_iosev;
 boost::asio::serial_port tr_sp(tr_iosev, "/dev/ttyACM0");
 boost::system::error_code tr_err;
-/********************************************************
-            串口发送接收相关常量、变量、共用体对象
-********************************************************/
-const unsigned char ender[2] = {0x0d, 0x0a};
-const unsigned char header[2] = {0x55, 0xaa};
+
+
+const unsigned char ender[2] = {0x0d, 0x0a};//数据尾
+const unsigned char header[2] = {0x55, 0xaa};//数据头
 
 //发送当前位置x,y和偏航角yaw共用体（-32767 - +32768）
 union sendData
@@ -20,11 +20,12 @@ union sendData
 }left_x,left_y,middle_x,middle_y,right_x,right_y;
 
 
-/********************************************************
-函数功能：串口参数初始化
-入口参数：无
-出口参数：
-********************************************************/
+/**
+ * @brief: 串口参数初始化
+ * @param {*}
+ * @return {*}
+ * @author: 
+ */
 void TR_SerialInit()
 {
     tr_sp.set_option(serial_port::baud_rate(115200));
@@ -34,11 +35,12 @@ void TR_SerialInit()
     tr_sp.set_option(serial_port::character_size(8));    
 }
 
-/********************************************************
-函数功能：将对机器人的x,y,yaw打包发送给下位机
-入口参数：x,y,yaw,控制位
-出口参数：
-********************************************************/
+/**
+ * @brief: 发送三个壶的坐标给TR瞄准
+ * @param {*}
+ * @return {*}
+ * @author: 
+ */
 void TR_SerialWrite(int left_x_pos, int left_y_pos,int middle_x_pos,int middle_y_pos,int right_x_pos,int right_y_pos,unsigned char ctrlFlag)
 {
     unsigned char buf[19] = {0};//
@@ -81,11 +83,14 @@ void TR_SerialWrite(int left_x_pos, int left_y_pos,int middle_x_pos,int middle_y
     boost::asio::write(tr_sp, boost::asio::buffer(buf));
 }
 
-/********************************************************
-函数功能：获得8位循环冗余校验值
-入口参数：数组地址、长度
-出口参数：校验值
-********************************************************/
+
+/**
+ * @brief: 获得8位循环冗余校验值
+ * @param {unsigned char} *ptr 数组地址
+ * @param {unsigned short} len 数组长度
+ * @return {unsigned char}  crc 校验值
+ * @author: 
+ */
 unsigned char TR_getCrc8(unsigned char *ptr, unsigned short len)
 {
     unsigned char crc;

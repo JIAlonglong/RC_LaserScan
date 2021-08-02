@@ -1,10 +1,12 @@
 #include "get_center.h"
-/********************************************************
- * @brief 根据起始下标 确定壶心坐标
+
+/**
+ * @brief: 根据起始下标 确定壶心坐标
  * @param start_end_index 起始下标
- * @param data 数据 
  * @param xyR 拟合输出的圆心坐标和半径
- * ******************************************************/
+ * @return {*}
+ * @author: bonbon
+ */
 void index2center(std::vector<float> & start_end_index,std::vector<float>&data,std::vector<float>&xyR)
 {
     if((start_end_index[0]==0) && (start_end_index[1]==0))
@@ -32,59 +34,16 @@ void index2center(std::vector<float> & start_end_index,std::vector<float>&data,s
             get_circle_center(circle,xyR);
         }
     }
-    
-    /*
-    else if(start_end_index.size() ==4)
-    {
-        std::vector<float> circle1(DATA_NUM),circle2(DATA_NUM);
-        for(int i =0;i<DATA_NUM;i++)
-        {
-            if(i>=start_end_index[0] && i<start_end_index[1])
-            {
-                circle1[i] =data[i];
-            }
-            else
-            {
-                circle1[i] =0;
-            }
-        }
-        for(int i =0;i<DATA_NUM;i++)
-        {
-            if(i>=start_end_index[2] && i<start_end_index[3])
-            {
-                circle2[i] =data[i];
-            }
-            else
-            {
-                circle2[i] =0;
-            }
-        }
-        std::vector<float> xyR1(3),xyR2(3);
-        get_circle_center(circle1,xyR1);
-        get_circle_center(circle2,xyR2);
-        if(xyR1[0]<xyR2[0])
-        {
-            xyR[0]=xyR1[0];
-            xyR[1]=xyR1[1];
-            xyR[2]=xyR1[2];
-        }
-        else
-        {
-            xyR[0]=xyR2[0];
-            xyR[1]=xyR2[1];
-            xyR[2]=xyR2[2];
-        }       
-    }
-    */
-   
+       
 }
 
-
-/********************************************************
- * @brief 最小二乘法拟合圆心
- * @param vec 数据 
+/**
+ * @brief: 
+ * @param vec 数据
  * @param xyR 拟合输出的圆心坐标和半径
- * ******************************************************/
+ * @return {*}
+ * @author: 
+ */
 void get_circle_center(std::vector<float> & vec,std::vector<float> &xyR)
 {
 	int num = 0; //用于计算被过滤掉的数据个数
@@ -144,14 +103,14 @@ void get_circle_center(std::vector<float> & vec,std::vector<float> &xyR)
  	xyR[2] = sqrt(a * a + b * b - 4 * c) / 2;
 }
 
-
-
-/********************************************************
- * @brief 分离出连续段
+/**
+ * @brief: 分离出连续段
  * @param data 数据
  * @param start_index 连续段开始下标vector
  * @param end_index 连续段结束下标vector
- * ******************************************************/
+ * @return {*}
+ * @author: bonbon
+ */
 void splinter_continuous_part(std::vector<float>&data,std::vector<float>&start_index,std::vector<float>&end_index)
 {  
     bool start_sign = true;//开始的标志
@@ -195,6 +154,13 @@ void splinter_continuous_part(std::vector<float>&data,std::vector<float>&start_i
 }
 
 
+//其实也可以根据最后计算出的全场坐标来分配
+/**
+ * @brief: 将坐标正确分配给左中右三壶
+ * @param {*}
+ * @return {*}
+ * @author: bonbon
+ */
 void distributeData(std::vector<float> &start_index,
                     std::vector<float> &end_index,
                     std::vector<float> &left,

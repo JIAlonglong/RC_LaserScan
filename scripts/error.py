@@ -6,9 +6,10 @@
  Version: 1.0
  Autor: bonbon
  Date: 2021-06-20 19:31:27
- LastEditors: bonbon
- LastEditTime: 2021-07-08 17:11:25
+LastEditors: bonbon
+LastEditTime: 2021-08-02 14:07:39
 '''
+
 import numpy as np
 class Error:
     def __init__(self,col,row):

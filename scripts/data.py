@@ -1,4 +1,15 @@
-# -*- coding: utf-8 -*-
+# !usr/bin/env python
+# -*- coding:utf-8 -*-
+
+'''
+Description: 
+Version: 1.0
+Autor: bonbon
+Date: 2021-08-01 19:58:22
+LastEditors: bonbon
+LastEditTime: 2021-08-02 14:06:52
+'''
+
 import numpy as np
 class Data:
     def __init__(self,col,row):

@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(pots_coordinates)
+project(rc_laserscan)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+ add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
   geometry_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,8 +109,8 @@ generate_messages(DEPENDENCIES std_msgs)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES pots_coordinates
-   CATKIN_DEPENDS geometry_msgs roscpp rospy std_msgs message_runtime
+#  LIBRARIES rc_laserscan
+  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -120,13 +121,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
+ include
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/pots_coordinates.cpp
+#   src/${PROJECT_NAME}/rc_laserscan.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -137,7 +138,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/pots_coordinates_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/rc_laserscan_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -153,24 +154,62 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-add_executable(pots_coordinates 
+
+# main
+add_executable(main 
 src/filter.cpp 
 src/main.cpp
 src/coordinate.cpp
 src/TR_communication.cpp
 src/DR_communication.cpp
 src/save.cpp
-src/action.cpp
+src/calibration.cpp
+src/lidar.cpp
+src/get_center.cpp
+src/pot_grab.cpp
+src/get_var.cpp
+)
+target_link_libraries(main ${catkin_LIBRARIES})
+
+#pub tf
+add_executable(pub_tf 
+src/DR_communication.cpp
+src/pub_tf.cpp
+src/calibration.cpp
+src/filter.cpp
+src/get_center.cpp
+src/coordinate.cpp
+)
+target_link_libraries(pub_tf ${catkin_LIBRARIES})
+
+#transform
+add_executable(transform src/transform.cpp)
+target_link_libraries(transform ${catkin_LIBRARIES})
+
+#recall tf
+add_executable(recall_tf
+src/recall_tf.cpp
+src/calibration.cpp
+src/filter.cpp
+src/get_center.cpp
+src/coordinate.cpp)
+target_link_libraries(recall_tf ${catkin_LIBRARIES})
+
+#recall main
+add_executable(recall_main 
+src/filter.cpp 
+src/recall_main.cpp
+src/coordinate.cpp
+src/save.cpp
 src/calibration.cpp
 src/lidar.cpp
 src/get_center.cpp
 src/pot_grab.cpp
 )
+target_link_libraries(recall_main ${catkin_LIBRARIES})
 
+#add_dependencies(rc_laserscan ${PROJECT_NAME}_generate_messages_cpp)
 
-
-target_link_libraries(pots_coordinates ${catkin_LIBRARIES})
-add_dependencies(pots_coordinates ${PROJECT_NAME}_generate_messages_cpp)
 #############
 ## Install ##
 #############
@@ -218,7 +257,7 @@ add_dependencies(pots_coordinates ${PROJECT_NAME}_generate_messages_cpp)
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_pots_coordinates.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_rc_laserscan.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

@@ -1,0 +1,8 @@
+<launch>
+	<!-- tf and transform /-->
+	<node name="recall_tf" pkg="rc_laserscan" type="recall_tf" output="screen" launch-prefix="xterm -e"/>
+	<node name="transform" pkg="rc_laserscan" type="transform" output="screen" />
+	
+	<!-- run code /-->
+	<node name="recall_main" pkg="rc_laserscan" type="recall_main" output="screen" launch-prefix="xterm -e"/>
+</launch>

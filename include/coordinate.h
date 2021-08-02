@@ -1,7 +1,17 @@
+/*
+ * @Description: 
+ * @Version: 1.0
+ * @Autor: bonbon
+ * @Date: 2021-08-01 19:58:22
+ * @LastEditors: bonbon
+ * @LastEditTime: 2021-08-02 13:53:03
+ */
+
 #pragma once 
 #include <iostream>
 #include <vector>
-#include "pots_coordinates/coordinate.h"
+#include "rc_laserscan/coordinate.h"
+
 class Coordinate
 {
     public:
@@ -16,7 +26,7 @@ class Coordinate
         std::vector<float> middle_xyR{std::vector<float>(3)};
         std::vector<float> right_xyR{std::vector<float>(3)};
    
-        pots_coordinates::coordinate coordinate_msg;//坐标消息类型类
+        rc_laserscan::coordinate coordinate_msg;//坐标消息类型类
 
         Coordinate();
         ~Coordinate();
@@ -34,20 +44,9 @@ void change2worldCoordinate(float pot_laser_x,float pot_laser_y,
                             short DR_x,short DR_y,
                             float DrAction2DrLaser_x,float DrAction2DrLaser_y,
                             int *result_x,int *result_y);
+short limit(short value,short min_value,short max_value);
+double dlimit(double value,double min_value,double max_value);
 
-/*****************
- *         y
- *            ^
- *             |                         以DR启动区中心为全场坐标原点
- *             |                    雷达正向对着三个壶是x 从左往右以此是1、2、3壶     
- *             |                                                                      
- *             |____________> x
- *             |□
- *             |
- *             |
- *             |
- *
- *  **/
 
 
 

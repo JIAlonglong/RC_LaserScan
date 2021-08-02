@@ -2,16 +2,14 @@
 
 using namespace std;
 using namespace boost::asio;
+
 //串口相关对象
 boost::asio::io_service dr_iosev;
 boost::asio::serial_port dr_sp(dr_iosev, "/dev/ttyUSB0");
 boost::system::error_code dr_err;
-/********************************************************
-            串口发送接收相关常量、变量、共用体对象
-********************************************************/
-const unsigned char ender[2] = {0x0d, 0x0a};
-const unsigned char header[2] = {0x55, 0xaa};
 
+const unsigned char ender[2] = {0x0d, 0x0a};//消息尾
+const unsigned char header[2] = {0x55, 0xaa};//消息头
 
 //发送共用体
 union sendData
@@ -27,11 +25,13 @@ union receiveData
 	unsigned char data[2];
 }dr_x,dr_y,dr_yaw;
 
-/********************************************************
-函数功能：串口参数初始化
-入口参数：无
-出口参数：
-********************************************************/
+
+/**
+ * @brief: 串口初始化
+ * @param {*}
+ * @return {*}
+ * @author: 
+ */
 void DR_SerialInit()
 {
     dr_sp.set_option(serial_port::baud_rate(115200));
@@ -41,12 +41,15 @@ void DR_SerialInit()
     dr_sp.set_option(serial_port::character_size(8));    
 }
 
-
-/********************************************************
-函数功能：
-入口参数：
-出口参数：
-********************************************************/
+/**
+ * @brief: 将DR抓壶所需要的信息发送
+ * @param {int} x_pos 发送x
+ * @param {int} y_pos 发送y
+ * @param {int} theta 发送角度
+ * @param {unsigned char} ctrlFlag 发送flag
+ * @return {*}
+ * @author: 
+ */
 void DR_SerialWrite(int x_pos, int y_pos,int theta,unsigned char ctrlFlag)
 {
     unsigned char buf[13] = {0};//
@@ -83,11 +86,16 @@ void DR_SerialWrite(int x_pos, int y_pos,int theta,unsigned char ctrlFlag)
     boost::asio::write(dr_sp, boost::asio::buffer(buf));
 }
 
-/********************************************************
-函数功能：从下位机读取dr全场x，y，yaw
-入口参数：机器人x、y、yaw，预留控制位
-出口参数：bool
-********************************************************/
+
+/**
+ * @brief: 
+ * @param {short} &x 接受x地址
+ * @param {short} &y 接受y地址
+ * @param {short} &yaw 接受yaw地址
+ * @param {unsigned char} &ctrlFlag 接受flag地址
+ * @return {*}
+ * @author: 
+ */
 bool DR_SerialRead(short &x,short &y,short &yaw,unsigned char &ctrlFlag)
 {
     char i, length = 0;
@@ -135,7 +143,7 @@ bool DR_SerialRead(short &x,short &y,short &yaw,unsigned char &ctrlFlag)
     }
 
     // 读取控制标志位
-    ctrlFlag = buf[9];
+    ctrlFlag = buf[9]; //buf[9]
     
     x  =dr_x.d;
     y =dr_y.d;
@@ -143,11 +151,14 @@ bool DR_SerialRead(short &x,short &y,short &yaw,unsigned char &ctrlFlag)
 
     return true;
 }
-/********************************************************
-函数功能：获得8位循环冗余校验值
-入口参数：数组地址、长度
-出口参数：校验值
-********************************************************/
+
+/**
+ * @brief: 获得8位循环冗余校验值
+ * @param {unsigned char} *ptr 数组地址
+ * @param {unsigned short} len 数组长度
+ * @return {unsigned char} crc 校验值
+ * @author: 
+ */
 unsigned char DR_getCrc8(unsigned char *ptr, unsigned short len)
 {
     unsigned char crc;

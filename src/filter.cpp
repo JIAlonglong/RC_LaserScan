@@ -1,14 +1,13 @@
 #include "filter.h"
 //雷达数据逆时针-3pi/4到 3pi/4
 
-/********************************************************
- * @brief 指定半径数据少于k个则认为是离散点
- * @param data 数据
- * @param theta 角度对应数据
- * @param radius 半径 
- * @param k 半径 
- * ******************************************************/
-
+/**
+ * @brief: 去除离散点 指定半径数据少于k个则认为是离散点
+ * @param {float} radius 半径
+ * @param {int} k 数据个数
+ * @return {*}
+ * @author: bonbon
+ */
 void Filter::remove_outlier(std::vector<float>&data,std::vector<float>&theta,float radius,int k)
 {
     for(int i =0;i<DATA_NUM;i++)
@@ -39,12 +38,12 @@ void Filter::remove_outlier(std::vector<float>&data,std::vector<float>&theta,flo
 
 
 
-/********************************************************
- * @brief 分离出圆弧数据
- * @param data 数据 
- * @param theta 对应角度数据
- * @param deviation 离散点离正确值的差值阈值
- * ******************************************************/
+/**
+ * @brief: 分离出圆弧数据
+ * @param {float} deviation 离散点离正确值的差值阈值
+ * @return {*}
+ * @author: bonbon
+ */
 void Filter::get_circle(std::vector<float>&data,std::vector<float>&theta,float deviation)
 {
     std::vector<float>start_index;
@@ -68,10 +67,12 @@ void Filter::get_circle(std::vector<float>&data,std::vector<float>&theta,float d
     }
 }
 
-/********************************************************
- * @brief 根据连续段数量滤波
- * @param data 数据
- * ******************************************************/
+/**
+ * @brief: 根据连续段数量滤波
+ * @param {const int} MinNumber 数据个数最小值
+ * @return {*}
+ * @author: bonbon
+ */
 void Filter::num_filter(std::vector<float>&data,const int MinNumber)
 {
     std::vector<float>start_index;
@@ -91,10 +92,12 @@ void Filter::num_filter(std::vector<float>&data,const int MinNumber)
     }
 }
 
-
-
-
-
+/**
+ * @brief: 时域中值滤波
+ * @param 
+ * @return {*}
+ * @author: bonbon
+ */
 void Filter::median_filter(std::vector<float> & nowData,std::vector<float> & lastData)
 {
     //时域均值滤波
@@ -108,6 +111,22 @@ void Filter::median_filter(std::vector<float> & nowData,std::vector<float> & las
     }
 }
 
+/**
+ * @brief: 简单滤去对应半径、角度、xy以外的数据
+ * @param {bool} radiusFilter 是否半径滤波
+ * @param {float} r 半径滤波半径
+ * @param {bool} angleFilter 是否角度滤波
+ * @param {float} startAngle 角度滤波开始角度
+ * @param {float} endAngle 角度滤波终止角度
+ * @param {bool} xyFilter 是否xy滤波
+ * @param {float} startX x滤波x开始值
+ * @param {float} endX x滤波x结束值
+ * @param {float} startY y滤波y开始值
+ * @param {float} endY y滤波y结束值
+ * @param {float} angle 车子偏航
+ * @return {*}
+ * @author: bonbon
+ */
 void Filter::easy_filter(std::vector<float> &data,std::vector<float>&theta,
                         bool radiusFilter,float r,
                         bool angleFilter,float startAngle,float endAngle,
@@ -160,31 +179,55 @@ void Filter::easy_filter(std::vector<float> &data,std::vector<float>&theta,
     }
 }
 
+/**
+ * @brief: 卡尔曼滤波
+ * @param {short} x 目前全场定位x
+ * @param {short} y 目前全场定位y
+ * @param {double} yaw 目前全场定位偏航
+ * @param {short} *last_x 上一次全场定位x地址
+ * @param {short} *last_y 上一次全场定位y地址
+ * @return {*}
+ * @author: bonbon
+ */
 void Filter::kalman_filter(std::vector<float> & nowData,
                     std::vector<float> & lastData,
                     std::vector<float>& theta,
-                    short x,short y)
+                    short x,short y,double yaw,
+                    short *last_x,short *last_y)
 {
     
     for(int i=0;i<DATA_NUM;i++)
     {
-    
+        //计算车子距离上一次x，y位移
+        float delta_x = (x - *last_x)/1000.0;
+        float delta_y = (y - *last_y)/1000.0;
+
+        //计算目前雷达获取的x，y坐标
+        float x0 =(cos(theta[i])*lastData[i]);
+        float y0 =(sin(theta[i])*lastData[i]);
+
+        //坐标系旋转
+        coordinate_rotation(&x0,&y0,yaw);
+
         //预测
-        float s = sqrt(
-                    pow(((x/1000.0)-(cos(theta[i])*lastData[i])),2) +
-                    pow(((y/1000.0)-(sin(theta[i])*lastData[i])),2)
-                    );
+        float s = sqrt((x0-delta_x)*(x0-delta_x)+(y0-delta_y)*(y0-delta_y));
 
         //计算方差
         float var =sqrt(last_var[i]*last_var[i]+predict_var*predict_var);
 
+        //计算卡尔曼增益
+        float kalman_gain = sqrt((var*var)/(var*var+measure_var*measure_var));
+        
         //计算最优值 并输出
-        nowData[i] =((var*var)*nowData[i] + (measure_var*measure_var)*s)/
-                    (var*var+measure_var*measure_var);
+        nowData[i] = s + kalman_gain*(nowData[i]-s);
 
         //更新偏差
-        last_var[i] =sqrt((1-var*var/(var*var+measure_var*measure_var)*var*var));
+        last_var[i] = sqrt((1-kalman_gain)*var*var);    
     }
+
+    lastData =nowData;
+    *last_x =x;
+    *last_y =y;
 }
 
 

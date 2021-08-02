@@ -1,12 +1,25 @@
-# -*- coding: utf-8 -*-
+# !usr/bin/env python
+# -*- coding:utf-8 -*-
+
+'''
+Description: 
+Version: 1.0
+Autor: bonbon
+Date: 2021-08-01 19:58:22
+LastEditors: bonbon
+LastEditTime: 2021-08-02 14:07:02
+'''
+
 import matplotlib.pyplot as plt
 class Display:
     def __init__(self, monitor,col,row):
         self.col = col
         self.row = row
+
         #设置squeeze=False 不然在row=1或者col=1时候会报错
-        #plt.subplots reduces the array of Axes to a single axes in case only one column and one row are used.
+        #原因：plt.subplots reduces the array of Axes to a single axes in case only one column and one row are used.
         self.fig, self.ax = plt.subplots(self.row, self.col, squeeze=False,figsize=(5*self.col, 5*self.row))
+        
         self.line =[]
         for row in range(self.row):
             for col in range(self.col):

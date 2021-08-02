@@ -1,4 +1,11 @@
 #include "lidar.h"
+
+/**
+ * @brief: 雷达初始化角度数据 用于将雷达的距离数据转换成x和y
+ * @param {*}
+ * @return {*}
+ * @author: bonbon
+ */
 void Lidar::init()
 {
     // 初始化角度数据   
@@ -8,11 +15,23 @@ void Lidar::init()
     }   
 }
 
+/**
+ * @brief: 获取数据
+ * @param 
+ * @return {*}
+ * @author: bonbon
+ */
 void Lidar::getData(const sensor_msgs::LaserScan::ConstPtr& scan)
 {
     nowData = std::vector<float>(scan->ranges);
 }
 
+/**
+ * @brief: 预发布 将发布的内容赋值
+ * @param 
+ * @return {*}
+ * @author: bonbon
+ */
 void Lidar::prePublish(const sensor_msgs::LaserScan::ConstPtr& scan)
 {
     //发布滤波后的数据
@@ -28,7 +47,7 @@ void Lidar::prePublish(const sensor_msgs::LaserScan::ConstPtr& scan)
 
     result.ranges = std::vector<float>(nowData);
     result.intensities = std::vector<float>(scan->intensities);
-    /*  下面这种写法在rviz会显示一个贼酷炫的螺旋，虽然我也不知道有什么区别
+    /*  下面这种写法在rviz会显示一个贼酷炫的螺旋hhh，虽然我感觉没有什么区别
     for(int i = 0; i < DATA_NUM; i++)
     {
         result.ranges.push_back(nowData[i]);
