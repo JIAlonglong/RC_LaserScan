@@ -134,7 +134,7 @@ bool DR_SerialRead(short &x,short &y,short &yaw,unsigned char &ctrlFlag)
         return false;
     }    
 
-    // 读取速度值
+    // 读取值
     for(i = 0; i < 2; i++)
     {
         dr_x.data[i]  = buf[i + 3]; //buf[3] buf[4]
