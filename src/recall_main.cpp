@@ -31,9 +31,6 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
     //获取数据
     lidar.getData(scan);
 
-    //时域中值滤波
-    filter.median_filter(lidar.nowData, lidar.lastData);
-
     //读出标定的x y yaw
     calibrate.read();
 
@@ -48,8 +45,6 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
     action.x = (short)transformStamped.transform.translation.x;
     action.y = (short)transformStamped.transform.translation.y;
     
-    //ROS_INFO_STREAM("x="<<action.x<<"\t"<<"y="<<action.y);
-
     //四元数转欧拉角
     tf::Quaternion RQ2;
     tf::quaternionMsgToTF(transformStamped.transform.rotation, RQ2);
@@ -57,11 +52,15 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
     tf::Matrix3x3(RQ2).getRPY(roll, pitch, yaw);
 
     // 将标定的x y旋转到世界坐标
-    float distance = sqrt(
-        calibrate.DrAction2DrLaser_x * calibrate.DrAction2DrLaser_x +
-        calibrate.DrAction2DrLaser_y * calibrate.DrAction2DrLaser_y);
-    float DrAction2DrLaser_x = distance * cos(yaw);
-    float DrAction2DrLaser_y = distance * sin(yaw);
+    float DrAction2DrLaser_x=calibrate.DrAction2DrLaser_x;
+    float DrAction2DrLaser_y=calibrate.DrAction2DrLaser_y;
+    coordinate_rotation(&DrAction2DrLaser_x,&DrAction2DrLaser_y,yaw);
+
+    //卡尔曼滤波
+    filter.kalman_filter(
+        lidar.nowData,lidar.lastData,lidar.THETA,
+        action.x,action.y,yaw+calibrate.DrActionYaw,
+        &action.last_x,&action.last_y);
 
     //根据全场定位滤波
     float min_x = 0;
@@ -84,12 +83,6 @@ void laser_callback(const sensor_msgs::LaserScan::ConstPtr &scan)
     //数量滤波
     int DataMinNum = 20;
     filter.num_filter(lidar.nowData, DataMinNum);
-
-    //卡尔曼滤波
-    filter.kalman_filter(
-                lidar.nowData,lidar.lastData,lidar.THETA,
-                action.x,action.y,yaw+calibrate.DrActionYaw,
-                &action.last_x,&action.last_y);
 
     //获得连续段
     std::vector<float> start_index; //连续段的起始坐标

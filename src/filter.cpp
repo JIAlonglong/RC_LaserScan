@@ -216,7 +216,7 @@ void Filter::kalman_filter(std::vector<float> & nowData,
         float var =sqrt(last_var[i]*last_var[i]+predict_var*predict_var);
 
         //计算卡尔曼增益
-        float kalman_gain = sqrt((var*var)/(var*var+measure_var*measure_var));
+        float kalman_gain = (var*var)/(var*var+measure_var*measure_var);
         
         //计算最优值 并输出
         nowData[i] = s + kalman_gain*(nowData[i]-s);
